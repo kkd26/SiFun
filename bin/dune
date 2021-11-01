@@ -1,4 +1,4 @@
 (executable
  (public_name sifun)
  (name main)
- (libraries sifun))
+ (libraries sifun core))

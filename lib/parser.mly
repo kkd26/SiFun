@@ -26,9 +26,10 @@ appExpr:
 expr:
   | a = appExpr                          {a}
   | e = expr a = appExpr                 {Ast.App(e, a)}
-  | FUN v = VAR ARRVAL e = appExpr       {Ast.Fun(v, e)}
+  | FUN v = VAR ARRVAL e = expr          {Ast.Fun(v, e)}
 
 block:
-  | e = expr                             {[e]}
-  | e = expr SEMICOLON                   {[e]}
+  | SEMICOLON b = block                  {b}
   | e = expr SEMICOLON b = block         {e :: b}
+  | e = expr                             {[e]}
+  |                                      {[]}
