@@ -14,19 +14,23 @@
 start:
   | b = block EOF                        {b}
 
-appExpr:
+basicExpr:
   | i = INT                              {Ast.Int(i)}
   | v = VAR                              {Ast.Var(v)}
   | TRUE                                 {Ast.Bool(true)}
   | FALSE                                {Ast.Bool(false)}
   | LPAR RPAR                            {Ast.Unit}
   | LPAR e = expr RPAR                   {e}
-  | LPAR e1 = expr COMMA e2 = expr RPAR  {Ast.Pair(e1, e2)}  
+  | LPAR e1 = expr COMMA e2 = expr RPAR  {Ast.Pair(e1, e2)}
 
 expr:
+  | b = basicExpr                        {b}
   | a = appExpr                          {a}
-  | e = expr a = appExpr                 {Ast.App(e, a)}
   | FUN v = VAR ARRVAL e = expr          {Ast.Fun(v, e)}
+
+appExpr:
+  | b1 = basicExpr b2 = basicExpr        {Ast.App(b1, b2)}
+  | a = appExpr b = basicExpr            {Ast.App(a, b)}
 
 block:
   | SEMICOLON b = block                  {b}
