@@ -1,6 +1,7 @@
 %token <int> INT
 %token <string> VAR
 %token TRUE FALSE
+%token FST SND
 %token EOF LPAR RPAR COMMA SEMICOLON FUN ARRVAL
 
 %type <Ast.expr> appExpr
@@ -22,6 +23,8 @@ basicExpr:
   | LPAR RPAR                            {Ast.Unit}
   | LPAR e = expr RPAR                   {e}
   | LPAR e1 = expr COMMA e2 = expr RPAR  {Ast.Pair(e1, e2)}
+  | FST e = basicExpr                    {Ast.Fst(e)}
+  | SND e = basicExpr                    {Ast.Snd(e)}
 
 expr:
   | b = basicExpr                        {b}

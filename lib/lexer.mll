@@ -22,6 +22,8 @@ rule read =
   | white    { read lexbuf }
   | "true"   { TRUE }
   | "false"  { FALSE }
+  | "fst"    { FST }
+  | "snd"    { SND }
   | "fn"     { FUN }
   | "=>"     { ARRVAL }
   | ';'      { SEMICOLON }
