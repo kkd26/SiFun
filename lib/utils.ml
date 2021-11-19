@@ -16,10 +16,15 @@ let stringToExprList input =
 (** Prints formatted AST on the screen*)
 let printAst astList =
   let astString = Ast.exprListToString astList in
-  Printf.printf "%s" astString
+  Printf.printf "AST:\n%s\n" astString
 
 (** Prints formatted AST after transforming it into the de Bruijn indices *)
-let printDBAst astList =
-  let dBExprList = List.map Debruijn.toDeBruijn astList in
+let printDBAst dBExprList =
   let dBAstString = Debruijn.exprListToString dBExprList in
-  Printf.printf "%s" dBAstString
+  Printf.printf "DeBruijn:\n%s\n" dBAstString
+
+let printTypeExpr typeExpr =
+  let typeExprString = Type.typeExprToString typeExpr in
+  Printf.printf "Type:\n%s\n" typeExprString
+
+let printSubst subst = Printf.printf "%s\n" (Type.substToString subst)
