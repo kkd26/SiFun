@@ -34,6 +34,6 @@ end
 
 module IntState = State (struct type t = int end)
 
-let fresh_name =
+let freshName =
   let open IntState in
   get >>= fun i -> put (i + 1) >>= fun () -> return i

@@ -11,7 +11,7 @@ type expr =
   | Fun of expr
   | App of expr * expr
 
-let empty_env _ = failwith "Empty env"
+let emptyEnv _ = failwith "Empty env"
 let update env x y = if y = x then 0 else 1 + env y
 
 let toDeBruijn =
@@ -27,7 +27,7 @@ let toDeBruijn =
         let newEnv = update env v in
         Fun (toDeBruijn' newEnv e)
     | App (e1, e2) -> App (toDeBruijn' env e1, toDeBruijn' env e2) in
-  toDeBruijn' empty_env
+  toDeBruijn' emptyEnv
 
 let rec exprToString = function
   | Int i -> "Int(" ^ string_of_int i ^ ")"

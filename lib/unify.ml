@@ -8,10 +8,10 @@ let rec inType n t =
   | Fun (t1, t2) -> inType n t1 && inType n t2
   | _ -> true
 
-let rec unify_one (t1 : monoType) (t2 : monoType) : substitution =
+let rec unifyOne (t1 : monoType) (t2 : monoType) : substitution =
   match (t1, t2) with
-  | Int, Int | Bool, Bool | Unit, Unit -> empty_subst
-  | Var n, Var m -> if n = m then empty_subst else [(n, t2)]
+  | Int, Int | Bool, Bool | Unit, Unit -> emptySubst
+  | Var n, Var m -> if n = m then emptySubst else [(n, t2)]
   | Fun (t3, t4), Fun (t5, t6) -> unify [(t3, t5); (t4, t6)]
   | Pair (t3, t4), Pair (t5, t6) -> unify [(t3, t5); (t4, t6)]
   | Var n, t | t, Var n -> (
@@ -33,5 +33,5 @@ and unify s : substitution =
   | [] -> []
   | (x, y) :: t ->
       let t2 = unify t in
-      let t1 = unify_one (apply_subst t2 x) (apply_subst t2 y) in
+      let t1 = unifyOne (applySubstToMonoType t2 x) (applySubstToMonoType t2 y) in
       t1 @ t2

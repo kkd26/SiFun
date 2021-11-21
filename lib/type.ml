@@ -10,13 +10,13 @@ type monoType =
 
 type typeCtx = (typeVar * monoType) list
 
-let empty_ctx : typeCtx = []
-let update_ctx (ctx : typeCtx) x t : typeCtx = (x, t) :: ctx
+let emptyCtx : typeCtx = []
+let updateCtx (ctx : typeCtx) x t : typeCtx = (x, t) :: ctx
 let find (x : typeVar) (ctx : typeCtx) : monoType = snd (List.nth ctx x)
 
 type substitution = (typeVar * monoType) list
 
-let empty_subst : substitution = []
+let emptySubst : substitution = []
 
 let rec subst (s : monoType) (x : typeVar) (t : monoType) : monoType =
   match t with
@@ -25,16 +25,16 @@ let rec subst (s : monoType) (x : typeVar) (t : monoType) : monoType =
   | Pair (t1, t2) -> Pair (subst s x t1, subst s x t2)
   | t -> t
 
-let apply_subst (s : substitution) (t : monoType) : monoType =
+let applySubstToMonoType (s : substitution) (t : monoType) : monoType =
   List.fold_right (fun (x, s) -> subst s x) s t
 
 let applySubstToCtx s (ctx : typeCtx) : typeCtx =
-  List.map (fun (x, t) -> (x, apply_subst s t)) ctx
+  List.map (fun (x, t) -> (x, applySubstToMonoType s t)) ctx
 
-let comb s1 s2 : substitution =
-  List.map (fun (x, t) -> (x, apply_subst s1 t)) (s1 @ s2)
+let combineSubst s1 s2 : substitution =
+  List.map (fun (x, t) -> (x, applySubstToMonoType s1 t)) (s1 @ s2)
 
-let subst_from_list list : substitution =
+let substFromList list : substitution =
   let n = List.length list in
   let range = List.init n (fun x -> x) in
   List.combine range list
