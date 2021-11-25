@@ -1,9 +1,12 @@
 open Sifun
 open Type
+open Subst
 open Unify
 open OUnit2
 
-let basicTypes = [Int; Bool; Unit; Var 0; Var 1; Var 2; Var 3; Var 4; Var 5]
+let basicTypes =
+  [Int; Bool; Unit; Var "a"; Var "b"; Var "c"; Var "d"; Var "e"; Var "f"]
+
 let constructors = [(fun x y -> Fun (x, y)); (fun x y -> Pair (x, y))]
 
 let combine l a =
@@ -40,9 +43,9 @@ let unifyIntWithBool _ =
 
 let unifyVar0WithVar1 _ =
   (* ARRANGE *)
-  let expected = substFromList [Var 1] in
+  let expected = substFromList [Var "b"] in
   (* ACT *)
-  let output = unifyOne (Var 0) (Var 1) in
+  let output = unifyOne (Var "a") (Var "b") in
   (* ASSERT *)
   assert_bool "Incorrect" (compareSubstitutions expected output)
 
@@ -50,23 +53,23 @@ let unifyFunVar0BoolWithFunIntVar1 _ =
   (* ARRANGE *)
   let expected = substFromList [Int; Bool] in
   (* ACT *)
-  let output = unifyOne (Fun (Var 0, Bool)) (Fun (Int, Var 1)) in
+  let output = unifyOne (Fun (Var "a", Bool)) (Fun (Int, Var "b")) in
   (* ASSERT *)
   assert_bool "Incorrect" (compareSubstitutions expected output)
 
 let unifyPairVar2BoolWithPairIntVar1 _ =
   (* ARRANGE *)
-  let expected = substFromList [Var 0; Bool; Int] in
+  let expected = substFromList [Var "a"; Bool; Int] in
   (* ACT *)
-  let output = unifyOne (Pair (Var 2, Bool)) (Pair (Int, Var 1)) in
+  let output = unifyOne (Pair (Var "c", Bool)) (Pair (Int, Var "b")) in
   (* ASSERT *)
   assert_bool "Incorrect" (compareSubstitutions expected output)
 
 let unifyPairVar2BoolWithVar0 _ =
   (* ARRANGE *)
-  let expected = substFromList [Pair (Var 2, Bool)] in
+  let expected = substFromList [Pair (Var "c", Bool)] in
   (* ACT *)
-  let output = unifyOne (Pair (Var 2, Bool)) (Var 0) in
+  let output = unifyOne (Pair (Var "c", Bool)) (Var "a") in
   (* ASSERT *)
   assert_bool "Incorrect" (compareSubstitutions expected output)
 
@@ -74,7 +77,8 @@ let unifyFunFunVar0Var0Var0WithFunVar1Int _ =
   (* ARRANGE *)
   let expected = substFromList [Int; Fun (Int, Int)] in
   (* ACT *)
-  let output = unifyOne (Fun (Fun (Var 0, Var 0), Var 0)) (Fun (Var 1, Int)) in
+  let output =
+    unifyOne (Fun (Fun (Var "a", Var "a"), Var "a")) (Fun (Var "b", Int)) in
   (* ASSERT *)
   assert_bool "Incorrect" (compareSubstitutions expected output)
 

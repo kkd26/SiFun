@@ -1,4 +1,5 @@
 open Type
+open Subst
 open Unify
 open State
 

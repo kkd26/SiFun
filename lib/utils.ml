@@ -27,4 +27,4 @@ let printTypeExpr typeExpr =
   let typeExprString = Type.typeExprToString typeExpr in
   Printf.printf "Type:\n%s\n" typeExprString
 
-let printSubst subst = Printf.printf "%s\n" (Type.substToString subst)
+let printSubst subst = Printf.printf "%s\n" (Subst.substToString subst)

@@ -1,4 +1,5 @@
 open Type
+open Subst
 
 let rec inType n t =
   match t with
@@ -33,5 +34,6 @@ and unify s : substitution =
   | [] -> []
   | (x, y) :: t ->
       let t2 = unify t in
-      let t1 = unifyOne (applySubstToMonoType t2 x) (applySubstToMonoType t2 y) in
+      let t1 =
+        unifyOne (applySubstToMonoType t2 x) (applySubstToMonoType t2 y) in
       t1 @ t2
