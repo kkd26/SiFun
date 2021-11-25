@@ -10,9 +10,9 @@ let fromFile filename () =
   printAst astList ;
   let dBAst = List.map toDeBruijn astList in
   printDBAst dBAst ;
-  let reduced = List.map Simple.reduceAll dBAst in
-  printDBAst reduced ;
-  let infer = List.map Infer.inferType dBAst in
+  (* let reduced = List.map Simple.reduceAll dBAst in
+  printDBAst reduced ; *)
+  let infer = List.map Infer.inferTypeHMV dBAst in
   let _, types = List.split infer in
   let _ = List.map printTypeExpr types in
   Core.In_channel.close inx

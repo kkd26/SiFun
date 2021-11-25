@@ -7,6 +7,10 @@ type monoType =
   | Unit
   | Pair of monoType * monoType
   | Fun of monoType * monoType
+  | ForAll of typeVar * monoType
+
+let forAllFromList typeVarList typeExpr =
+  List.fold_right (fun v t -> ForAll (v, t)) typeVarList typeExpr
 
 let numToString n =
   let i = n / 26 in
@@ -24,3 +28,4 @@ let rec typeExprToString = function
       let inner = typeExprToString t1 in
       (match t1 with Fun (_, _) -> "(" ^ inner ^ ")" | _ -> inner)
       ^ " -> " ^ typeExprToString t2
+  | ForAll (s, t) -> "∀" ^ s ^ ".(" ^ typeExprToString t ^ ")"

@@ -1,10 +1,10 @@
-open Type
+open DBType
 
-type typeCtx = (typeVar * monoType) list
+type typeCtx = monoType list
 
 let emptyCtx : typeCtx = []
-let updateCtx (ctx : typeCtx) x t : typeCtx = (x, t) :: ctx
-let find (x : int) (ctx : typeCtx) : monoType = snd (List.nth ctx x)
+let updateCtx (ctx : typeCtx) (t : monoType) = t :: ctx
+let find (x : int) (ctx : typeCtx) : monoType = List.nth ctx x
 
 type substitution = (typeVar * monoType) list
 
@@ -21,19 +21,20 @@ let applySubstToMonoType (s : substitution) (t : monoType) : monoType =
   List.fold_right (fun (x, s) -> subst s x) s t
 
 let applySubstToCtx s (ctx : typeCtx) : typeCtx =
-  List.map (fun (x, t) -> (x, applySubstToMonoType s t)) ctx
+  List.map (applySubstToMonoType s) ctx
 
 let combineSubst s1 s2 : substitution =
   List.map (fun (x, t) -> (x, applySubstToMonoType s1 t)) (s1 @ s2)
 
 let substFromList list : substitution =
   let n = List.length list in
-  let range = List.init n (fun x -> numToString x) in
+  let range = List.init n (fun x -> -(x + 1)) in
   List.combine range list
 
 exception TypeException
 exception UnifyException of string
 
 let substToString =
-  let elemToString a (x, t) = a ^ x ^ ":(" ^ typeExprToString t ^ ") " in
+  let elemToString a (x, t) =
+    a ^ string_of_int x ^ ":(" ^ typeExprToString t ^ ") " in
   List.fold_left elemToString ""

@@ -1,4 +1,4 @@
-open Type
+open DBType
 open Subst
 
 let rec inType n t =
@@ -7,6 +7,7 @@ let rec inType n t =
       if n = m then raise (UnifyException "Circular dependencies ") else true
   | Pair (t1, t2) -> inType n t1 && inType n t2
   | Fun (t1, t2) -> inType n t1 && inType n t2
+  | ForAll t1 -> inType n t1
   | _ -> true
 
 let rec unifyOne (t1 : monoType) (t2 : monoType) : substitution =
@@ -15,6 +16,7 @@ let rec unifyOne (t1 : monoType) (t2 : monoType) : substitution =
   | Var n, Var m -> if n = m then emptySubst else [(n, t2)]
   | Fun (t3, t4), Fun (t5, t6) -> unify [(t3, t5); (t4, t6)]
   | Pair (t3, t4), Pair (t5, t6) -> unify [(t3, t5); (t4, t6)]
+  | ForAll t1, ForAll t2 -> unifyOne t1 t2
   | Var n, t | t, Var n -> (
     try
       let _ = inType n t in

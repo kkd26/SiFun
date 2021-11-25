@@ -18,6 +18,7 @@ let rec shift i c = function
   | Snd e -> Fst (shift i c e)
   | Fun e -> Fun (shift i (c + 1) e)
   | App (e1, e2) -> App (shift i c e1, shift i c e2)
+  | _ -> failwith "No reduction"
 
 let rec subst e n = function
   | Int n -> Int n
@@ -29,6 +30,7 @@ let rec subst e n = function
   | Snd e1 -> Fst (subst e n e1)
   | Fun e1 -> Fun (subst (shift 1 0 e) (n + 1) e1)
   | App (e1, e2) -> App (subst e n e1, subst e n e2)
+  | _ -> failwith "No subst"
 
 let rec reduce = function
   | Int _ -> None
@@ -50,6 +52,7 @@ let rec reduce = function
         else match reduce e2 with Some e -> Some (App (e1, e)) | None -> None )
     | _ -> (
       match reduce e1 with Some e -> Some (App (e, e2)) | None -> None ) )
+  | _ -> failwith "No reduction"
 
 let doStep e = match reduce e with Some e -> e | None -> e
 let rec reduceAll e = match reduce e with Some e -> reduceAll e | None -> e

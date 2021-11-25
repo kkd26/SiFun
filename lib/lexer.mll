@@ -19,19 +19,29 @@ let ident_reg_exp = ['A'-'Z' 'a'-'z']+ ['0'-'9' 'A'-'Z' 'a'-'z' '_' '\'']*
 
 rule read =
   parse
-  | white    { read lexbuf }
-  | "true"   { TRUE }
-  | "false"  { FALSE }
-  | "fst"    { FST }
-  | "snd"    { SND }
-  | "fn"     { FUN }
-  | "=>"     { ARRVAL }
-  | ';'      { SEMICOLON }
-  | ','      { COMMA }
-  | '('      { LPAR }
-  | ')'      { RPAR }
-  | int      { INT (int_of_string (Lexing.lexeme lexbuf)) }
+  | white         { read lexbuf }
+  | "true"        { TRUE }
+  | "false"       { FALSE }
+  | "fst"         { FST }
+  | "snd"         { SND }
+  | "fn"          { FUN }
+  | "lam"         { LAM }
+  | "=>"          { ARRVAL }
+  | "int"         { TINT }
+  | "bool"        { TBOOL }
+  | "unit"        { TUNIT }
+  | "forall"      { TFORALL }
+  | "->"          { TARR }
+  | '.'           { DOT }
+  | ';'           { SEMICOLON }
+  | ':'           { COLON }
+  | ','           { COMMA }
+  | '('           { LPAR }
+  | ')'           { RPAR }
+  | '{'           { LCUR }
+  | '}'           { RCUR }
+  | int           { INT (int_of_string (Lexing.lexeme lexbuf)) }
   | ident_reg_exp {VAR (Lexing.lexeme lexbuf)}
-  | newline  { next_line lexbuf; read lexbuf }
-  | eof      { EOF }
-  | _ { raise (SyntaxError ("Unexpected char: " ^ Lexing.lexeme lexbuf)) }
+  | newline       { next_line lexbuf; read lexbuf }
+  | eof           { EOF }
+  | _             { raise (SyntaxError ("Unexpected char: " ^ Lexing.lexeme lexbuf)) }

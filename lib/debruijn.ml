@@ -9,25 +9,38 @@ type expr =
   | Fst of expr
   | Snd of expr
   | Fun of expr
+  | FunType of DBType.monoType * expr
   | App of expr * expr
+  | FunApp of expr * DBType.monoType
+  | Lam of expr
 
-let emptyEnv _ = failwith "Empty env"
+let emptyEnv s _ = failwith s
 let update env x y = if y = x then 0 else 1 + env y
 
 let toDeBruijn =
-  let rec toDeBruijn' env : Ast.expr -> expr = function
+  let rec toDeBruijn' ctx typeCtx : Ast.expr -> expr = function
     | Int i -> Int i
-    | Var v -> Var (env v)
+    | Var v -> Var (ctx v)
     | Bool b -> Bool b
     | Unit -> Unit
-    | Pair (e1, e2) -> Pair (toDeBruijn' env e1, toDeBruijn' env e2)
-    | Fst e -> Fst (toDeBruijn' env e)
-    | Snd e -> Snd (toDeBruijn' env e)
+    | Pair (e1, e2) ->
+        Pair (toDeBruijn' ctx typeCtx e1, toDeBruijn' ctx typeCtx e2)
+    | Fst e -> Fst (toDeBruijn' ctx typeCtx e)
+    | Snd e -> Snd (toDeBruijn' ctx typeCtx e)
     | Fun (v, e) ->
-        let newEnv = update env v in
-        Fun (toDeBruijn' newEnv e)
-    | App (e1, e2) -> App (toDeBruijn' env e1, toDeBruijn' env e2) in
-  toDeBruijn' emptyEnv
+        let newCtx = update ctx v in
+        Fun (toDeBruijn' newCtx typeCtx e)
+    | FunType (v, t, e) ->
+        let newCtx = update ctx v in
+        FunType (DBType.toDeBruijn typeCtx t, toDeBruijn' newCtx typeCtx e)
+    | App (e1, e2) ->
+        App (toDeBruijn' ctx typeCtx e1, toDeBruijn' ctx typeCtx e2)
+    | FunApp (e, t) ->
+        FunApp (toDeBruijn' ctx typeCtx e, DBType.toDeBruijn typeCtx t)
+    | Lam (v, e) ->
+        let newTypeCtx = update typeCtx v in
+        Lam (toDeBruijn' ctx newTypeCtx e) in
+  toDeBruijn' (emptyEnv "empty var env") (emptyEnv "empty type env")
 
 let rec exprToString = function
   | Int i -> "Int(" ^ string_of_int i ^ ")"
@@ -38,7 +51,12 @@ let rec exprToString = function
   | Fst e -> "Fst(" ^ exprToString e ^ ")"
   | Snd e -> "Snd(" ^ exprToString e ^ ")"
   | Fun e -> "Fun(" ^ exprToString e ^ ")"
+  | FunType (t, e) ->
+      "FunType(" ^ DBType.typeExprToString t ^ "," ^ exprToString e ^ ")"
   | App (e1, e2) -> "App(" ^ exprToString e1 ^ "," ^ exprToString e2 ^ ")"
+  | FunApp (e, t) ->
+      "FunApp(" ^ exprToString e ^ ", " ^ DBType.typeExprToString t ^ ")"
+  | Lam e -> "L " ^ "." ^ exprToString e
 
 let rec exprListToString = function
   | [] -> ""
