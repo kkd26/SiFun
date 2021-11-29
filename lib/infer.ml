@@ -60,10 +60,10 @@ let inferType (e : Debruijn.expr) : substitution * monoType =
 
 let inferTypeHMV e =
   let open IntState in
-  let rec inferTypeHMV' typeCtx (ctx : typeCtx) :
+  let rec inferTypeHMV' (ctx : typeCtx) :
       Debruijn.expr -> (substitution * monoType) t = function
     | FunApp (e, t) ->
-        inferTypeHMV' typeCtx ctx e
+        inferTypeHMV' ctx e
         >>= fun (s1, t1) ->
         freshName
         >>= fun x ->
@@ -73,12 +73,9 @@ let inferTypeHMV e =
         let tw = DBType.subst t 0 (applySubstToMonoType s3 (Var x)) in
         return (s3, tw)
     | FunType (t, f) ->
-        freshName
-        >>= fun x ->
         let newCtx = updateCtx ctx t in
         inferType' newCtx f
-        >>= fun (s, t) -> return (s, Fun (applySubstToMonoType s (Var x), t))
-    | Lam e ->
-        inferTypeHMV' typeCtx ctx e >>= fun (s1, t1) -> return (s1, ForAll t1)
+        >>= fun (s1, t1) -> return (s1, Fun (applySubstToMonoType s1 t, t1))
+    | Lam e -> inferTypeHMV' ctx e >>= fun (s1, t1) -> return (s1, ForAll t1)
     | t -> inferType' ctx t in
-  snd (runState (inferTypeHMV' emptyCtx emptyCtx e) ~init:(-1))
+  snd (runState (inferTypeHMV' emptyCtx e) ~init:(-1))
