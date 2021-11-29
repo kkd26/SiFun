@@ -9,9 +9,10 @@ type expr =
   | Fst of expr
   | Snd of expr
   | Fun of expr
-  | FunType of DBType.monoType * expr
   | App of expr * expr
-  | FunApp of expr * DBType.monoType
+  (* Extended Language *)
+  | FunType of DBType.monoType * expr
+  | TypeApp of expr * DBType.monoType
   | Lam of expr
 
 let emptyEnv s _ = failwith s
@@ -35,8 +36,8 @@ let toDeBruijn =
         FunType (DBType.toDeBruijn typeCtx t, toDeBruijn' newCtx typeCtx e)
     | App (e1, e2) ->
         App (toDeBruijn' ctx typeCtx e1, toDeBruijn' ctx typeCtx e2)
-    | FunApp (e, t) ->
-        FunApp (toDeBruijn' ctx typeCtx e, DBType.toDeBruijn typeCtx t)
+    | TypeApp (e, t) ->
+        TypeApp (toDeBruijn' ctx typeCtx e, DBType.toDeBruijn typeCtx t)
     | Lam (v, e) ->
         let newTypeCtx = update typeCtx v in
         Lam (toDeBruijn' ctx newTypeCtx e) in
@@ -54,8 +55,8 @@ let rec exprToString = function
   | FunType (t, e) ->
       "FunType(" ^ DBType.typeExprToString t ^ "," ^ exprToString e ^ ")"
   | App (e1, e2) -> "App(" ^ exprToString e1 ^ "," ^ exprToString e2 ^ ")"
-  | FunApp (e, t) ->
-      "FunApp(" ^ exprToString e ^ ", " ^ DBType.typeExprToString t ^ ")"
+  | TypeApp (e, t) ->
+      "TypeApp(" ^ exprToString e ^ ", " ^ DBType.typeExprToString t ^ ")"
   | Lam e -> "L " ^ "." ^ exprToString e
 
 let rec exprListToString = function

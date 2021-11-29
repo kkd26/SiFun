@@ -62,7 +62,7 @@ let inferTypeHMV e =
   let open IntState in
   let rec inferTypeHMV' (ctx : typeCtx) :
       Debruijn.expr -> (substitution * monoType) t = function
-    | FunApp (e, t) ->
+    | TypeApp (e, t) ->
         inferTypeHMV' ctx e
         >>= fun (s1, t1) ->
         freshName
