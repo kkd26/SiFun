@@ -64,6 +64,7 @@ basicTypeExpr:
   | TBOOL                                   {Type.Bool}
   | TUNIT                                   {Type.Unit}
   | LPAR t = typeExpr RPAR                  {t}
+  | LPAR t1 = typeExpr COMMA t2 = typeExpr RPAR {Type.Pair(t1, t2)}
 
 varList:
   |                                         {[]}
