@@ -31,11 +31,11 @@ let toDeBruijn =
     | Fun (v, e) ->
         let newCtx = update ctx v in
         Fun (toDeBruijn' newCtx typeCtx e)
+    | App (e1, e2) ->
+        App (toDeBruijn' ctx typeCtx e1, toDeBruijn' ctx typeCtx e2)
     | FunType (v, t, e) ->
         let newCtx = update ctx v in
         FunType (DBType.toDeBruijn typeCtx t, toDeBruijn' newCtx typeCtx e)
-    | App (e1, e2) ->
-        App (toDeBruijn' ctx typeCtx e1, toDeBruijn' ctx typeCtx e2)
     | TypeApp (e, t) ->
         TypeApp (toDeBruijn' ctx typeCtx e, DBType.toDeBruijn typeCtx t)
     | Lam (v, e) ->
