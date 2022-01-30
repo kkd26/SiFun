@@ -40,7 +40,8 @@ let toDeBruijn =
         TypeApp (toDeBruijn' ctx typeCtx e, DBType.toDeBruijn typeCtx t)
     | Lam (v, e) ->
         let newTypeCtx = update typeCtx v in
-        Lam (toDeBruijn' ctx newTypeCtx e) in
+        Lam (toDeBruijn' ctx newTypeCtx e)
+  in
   toDeBruijn' (emptyEnv "empty var env") (emptyEnv "empty type env")
 
 let rec exprToString = function

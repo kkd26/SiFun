@@ -38,20 +38,21 @@ let rec reduce = function
   | Bool _ -> None
   | Unit -> None
   | Pair (e1, e2) -> (
-    match reduce e1 with
-    | Some e -> Some (Pair (e, e2))
-    | None -> (
-      match reduce e2 with Some e -> Some (Pair (e1, e)) | None -> None ) )
-  | Fst e1 -> ( match e1 with Pair (e1, _) -> Some e1 | _ -> None )
-  | Snd e1 -> ( match e1 with Pair (_, e2) -> Some e2 | _ -> None )
+      match reduce e1 with
+      | Some e -> Some (Pair (e, e2))
+      | None -> (
+          match reduce e2 with Some e -> Some (Pair (e1, e)) | None -> None))
+  | Fst e1 -> ( match e1 with Pair (e1, _) -> Some e1 | _ -> None)
+  | Snd e1 -> ( match e1 with Pair (_, e2) -> Some e2 | _ -> None)
   | Fun _ -> None
   | App (e1, e2) -> (
-    match e1 with
-    | Fun e -> (
-        if isValue e2 then Some (shift (-1) 0 (subst (shift 1 0 e2) 0 e))
-        else match reduce e2 with Some e -> Some (App (e1, e)) | None -> None )
-    | _ -> (
-      match reduce e1 with Some e -> Some (App (e, e2)) | None -> None ) )
+      match e1 with
+      | Fun e -> (
+          if isValue e2 then Some (shift (-1) 0 (subst (shift 1 0 e2) 0 e))
+          else
+            match reduce e2 with Some e -> Some (App (e1, e)) | None -> None)
+      | _ -> (
+          match reduce e1 with Some e -> Some (App (e, e2)) | None -> None))
   | _ -> failwith "No reduction"
 
 let doStep e = match reduce e with Some e -> e | None -> e

@@ -32,8 +32,11 @@ end) : STATE with type state = S.t = struct
   let runState m ~init = m init
 end
 
-module IntState = State (struct type t = int end)
+module IntState = State (struct
+  type t = int
+end)
 
 let freshName =
   let open IntState in
-  get >>= fun i -> put (i + 1) >>= fun () -> return i
+  get >>= fun i ->
+  put (i + 1) >>= fun () -> return i

@@ -5,7 +5,8 @@ let lexbufToExprList line =
   | Parser.Error ->
       let msg =
         Printf.sprintf "At offset %d: syntax error.\n%!"
-          (Lexing.lexeme_start line) in
+          (Lexing.lexeme_start line)
+      in
       failwith msg
 
 (** Parses a string into a list of AST *)

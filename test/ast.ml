@@ -6,7 +6,7 @@ open OUnit2
 let parseUnit _ =
   (* ARRANGE *)
   let input = "()" in
-  let expected = [Unit] in
+  let expected = [ Unit ] in
   (* ACT *)
   let output = stringToExprList input in
   (* ASSERT *)
@@ -15,7 +15,7 @@ let parseUnit _ =
 let parseBool _ =
   (* ARRANGE *)
   let input = "true" in
-  let expected = [Bool true] in
+  let expected = [ Bool true ] in
   (* ACT *)
   let output = stringToExprList input in
   (* ASSERT *)
@@ -24,7 +24,7 @@ let parseBool _ =
 let parseInt1 _ =
   (* ARRANGE *)
   let input = "1" in
-  let expected = [Int 1] in
+  let expected = [ Int 1 ] in
   (* ACT *)
   let output = stringToExprList input in
   (* ASSERT *)
@@ -33,7 +33,7 @@ let parseInt1 _ =
 let parsePairInt1Int2 _ =
   (* ARRANGE *)
   let input = "(1,2)" in
-  let expected = [Pair (Int 1, Int 2)] in
+  let expected = [ Pair (Int 1, Int 2) ] in
   (* ACT *)
   let output = stringToExprList input in
   (* ASSERT *)
@@ -42,7 +42,7 @@ let parsePairInt1Int2 _ =
 let parsePairUnitBoolFalse _ =
   (* ARRANGE *)
   let input = "((),false)" in
-  let expected = [Pair (Unit, Bool false)] in
+  let expected = [ Pair (Unit, Bool false) ] in
   (* ACT *)
   let output = stringToExprList input in
   (* ASSERT *)
@@ -51,7 +51,7 @@ let parsePairUnitBoolFalse _ =
 let parseFunction _ =
   (* ARRANGE *)
   let input = "fn x => x" in
-  let expected = [Fun ("x", Var "x")] in
+  let expected = [ Fun ("x", Var "x") ] in
   (* ACT *)
   let output = stringToExprList input in
   (* ASSERT *)
@@ -60,7 +60,7 @@ let parseFunction _ =
 let parseFirst _ =
   (* ARRANGE *)
   let input = "fst(1,2)" in
-  let expected = [Fst (Pair (Int 1, Int 2))] in
+  let expected = [ Fst (Pair (Int 1, Int 2)) ] in
   (* ACT *)
   let output = stringToExprList input in
   (* ASSERT *)
@@ -69,7 +69,7 @@ let parseFirst _ =
 let parseSecond _ =
   (* ARRANGE *)
   let input = "snd(true,false)" in
-  let expected = [Snd (Pair (Bool true, Bool false))] in
+  let expected = [ Snd (Pair (Bool true, Bool false)) ] in
   (* ACT *)
   let output = stringToExprList input in
   (* ASSERT *)
@@ -78,7 +78,7 @@ let parseSecond _ =
 let parseNestedFunctions _ =
   (* ARRANGE *)
   let input = "fn x => fn x => fn x => x" in
-  let expected = [Fun ("x", Fun ("x", Fun ("x", Var "x")))] in
+  let expected = [ Fun ("x", Fun ("x", Fun ("x", Var "x"))) ] in
   (* ACT *)
   let output = stringToExprList input in
   (* ASSERT *)
@@ -87,7 +87,7 @@ let parseNestedFunctions _ =
 let parseNestedFunctionsWithApplication _ =
   (* ARRANGE *)
   let input = "fn x => fn x => fn x => x y" in
-  let expected = [Fun ("x", Fun ("x", Fun ("x", App (Var "x", Var "y"))))] in
+  let expected = [ Fun ("x", Fun ("x", Fun ("x", App (Var "x", Var "y")))) ] in
   (* ACT *)
   let output = stringToExprList input in
   (* ASSERT *)
@@ -96,7 +96,7 @@ let parseNestedFunctionsWithApplication _ =
 let parseNestedFunctionsWithApplication2 _ =
   (* ARRANGE *)
   let input = "fn x => fn x => (fn x => x) y" in
-  let expected = [Fun ("x", Fun ("x", App (Fun ("x", Var "x"), Var "y")))] in
+  let expected = [ Fun ("x", Fun ("x", App (Fun ("x", Var "x"), Var "y"))) ] in
   (* ACT *)
   let output = stringToExprList input in
   (* ASSERT *)
@@ -105,7 +105,7 @@ let parseNestedFunctionsWithApplication2 _ =
 let parseApplication _ =
   (* ARRANGE *)
   let input = "x y z" in
-  let expected = [App (App (Var "x", Var "y"), Var "z")] in
+  let expected = [ App (App (Var "x", Var "y"), Var "z") ] in
   (* ACT *)
   let output = stringToExprList input in
   (* ASSERT *)
@@ -114,7 +114,7 @@ let parseApplication _ =
 let parseExprInParenthesis _ =
   (* ARRANGE *)
   let input = "(1 2)" in
-  let expected = [App (Int 1, Int 2)] in
+  let expected = [ App (Int 1, Int 2) ] in
   (* ACT *)
   let output = stringToExprList input in
   (* ASSERT *)
@@ -123,7 +123,7 @@ let parseExprInParenthesis _ =
 let firstAndApplication _ =
   (* ARRANGE *)
   let input = "fst x y" in
-  let expected = [App (Fst (Var "x"), Var "y")] in
+  let expected = [ App (Fst (Var "x"), Var "y") ] in
   (* ACT *)
   let output = stringToExprList input in
   (* ASSERT *)
@@ -132,7 +132,7 @@ let firstAndApplication _ =
 let firstAndTypeApplication _ =
   (* ARRANGE *)
   let input = "fst x {int}" in
-  let expected = [TypeApp (Fst (Var "x"), Int)] in
+  let expected = [ TypeApp (Fst (Var "x"), Int) ] in
   (* ACT *)
   let output = stringToExprList input in
   (* ASSERT *)
@@ -141,7 +141,7 @@ let firstAndTypeApplication _ =
 let firstAndTypeApplication2 _ =
   (* ARRANGE *)
   let input = "fst x {int} {bool}" in
-  let expected = [TypeApp (TypeApp (Fst (Var "x"), Int), Bool)] in
+  let expected = [ TypeApp (TypeApp (Fst (Var "x"), Int), Bool) ] in
   (* ACT *)
   let output = stringToExprList input in
   (* ASSERT *)
@@ -150,7 +150,7 @@ let firstAndTypeApplication2 _ =
 let typedFunction _ =
   (* ARRANGE *)
   let input = "fn x : int => x" in
-  let expected = [FunType ("x", Int, Var "x")] in
+  let expected = [ FunType ("x", Int, Var "x") ] in
   (* ACT *)
   let output = stringToExprList input in
   (* ASSERT *)
@@ -159,7 +159,7 @@ let typedFunction _ =
 let lambdaTypeAbstraction _ =
   (* ARRANGE *)
   let input = "lam a. fn x : a => x" in
-  let expected = [Lam ("a", FunType ("x", Var "a", Var "x"))] in
+  let expected = [ Lam ("a", FunType ("x", Var "a", Var "x")) ] in
   (* ACT *)
   let output = stringToExprList input in
   (* ASSERT *)
@@ -169,15 +169,18 @@ let nestedLambdaTypeAbstraction _ =
   (* ARRANGE *)
   let input = "lam a b c. fn x : b => fn y => fn z : a => 1" in
   let expected =
-    [ Lam
-        ( "a"
-        , Lam
-            ( "b"
-            , Lam
-                ( "c"
-                , FunType
+    [
+      Lam
+        ( "a",
+          Lam
+            ( "b",
+              Lam
+                ( "c",
+                  FunType
                     ("x", Var "b", Fun ("y", FunType ("z", Var "a", Int 1))) )
-            ) ) ] in
+            ) );
+    ]
+  in
   (* ACT *)
   let output = stringToExprList input in
   (* ASSERT *)
@@ -187,12 +190,15 @@ let lambdaTypeWithForAll _ =
   (* ARRANGE *)
   let input = "lam a. fn x : forall a b c. a -> b => x" in
   let expected =
-    [ Lam
-        ( "a"
-        , FunType
-            ( "x"
-            , ForAll ("a", ForAll ("b", ForAll ("c", Fun (Var "a", Var "b"))))
-            , Var "x" ) ) ] in
+    [
+      Lam
+        ( "a",
+          FunType
+            ( "x",
+              ForAll ("a", ForAll ("b", ForAll ("c", Fun (Var "a", Var "b")))),
+              Var "x" ) );
+    ]
+  in
   (* ACT *)
   let output = stringToExprList input in
   (* ASSERT *)
@@ -200,25 +206,29 @@ let lambdaTypeWithForAll _ =
 
 let suite =
   "LexerAndParserTests"
-  >::: [ "parseFunction" >:: parseFunction; "parseInt1" >:: parseInt1
-       ; "parsePairInt1Int2\n      " >:: parsePairInt1Int2
-       ; "parseFirst" >:: parseFirst
-       ; "parseNestedFunctions" >:: parseNestedFunctions
-       ; "parseNestedFunctionsWithApplication"
-         >:: parseNestedFunctionsWithApplication
-       ; "parseNestedFunctionsWithApplication2"
-         >:: parseNestedFunctionsWithApplication2
-       ; "parseApplication" >:: parseApplication; "parseUnit" >:: parseUnit
-       ; "parseBool" >:: parseBool
-       ; "parsePairUnitBoolFalse" >:: parsePairUnitBoolFalse
-       ; "parseSecond" >:: parseSecond
-       ; "parseExprInParenthesis" >:: parseExprInParenthesis
-       ; "firstAndApplication" >:: firstAndApplication
-       ; "firstAndTypeApplication" >:: firstAndTypeApplication
-       ; "firstAndTypeApplication2" >:: firstAndTypeApplication2
-       ; "typedFunction" >:: typedFunction
-       ; "lambdaTypeAbstraction" >:: lambdaTypeAbstraction
-       ; "nestedLambdaTypeAbstraction" >:: nestedLambdaTypeAbstraction
-       ; "lambdaTypeWithForAll" >:: lambdaTypeWithForAll ]
+  >::: [
+         "parseFunction" >:: parseFunction;
+         "parseInt1" >:: parseInt1;
+         "parsePairInt1Int2\n      " >:: parsePairInt1Int2;
+         "parseFirst" >:: parseFirst;
+         "parseNestedFunctions" >:: parseNestedFunctions;
+         "parseNestedFunctionsWithApplication"
+         >:: parseNestedFunctionsWithApplication;
+         "parseNestedFunctionsWithApplication2"
+         >:: parseNestedFunctionsWithApplication2;
+         "parseApplication" >:: parseApplication;
+         "parseUnit" >:: parseUnit;
+         "parseBool" >:: parseBool;
+         "parsePairUnitBoolFalse" >:: parsePairUnitBoolFalse;
+         "parseSecond" >:: parseSecond;
+         "parseExprInParenthesis" >:: parseExprInParenthesis;
+         "firstAndApplication" >:: firstAndApplication;
+         "firstAndTypeApplication" >:: firstAndTypeApplication;
+         "firstAndTypeApplication2" >:: firstAndTypeApplication2;
+         "typedFunction" >:: typedFunction;
+         "lambdaTypeAbstraction" >:: lambdaTypeAbstraction;
+         "nestedLambdaTypeAbstraction" >:: nestedLambdaTypeAbstraction;
+         "lambdaTypeWithForAll" >:: lambdaTypeWithForAll;
+       ]
 
 let () = run_test_tt_main suite
