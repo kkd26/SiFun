@@ -67,9 +67,11 @@ let inferType (e : Debruijn.expr) : substitution * monoType =
     | _ -> e
   in
   let open IntState in
-  snd (runState (inferType' check emptyCtx e) ~init:0)
+  try snd (runState (inferType' check emptyCtx e) ~init:0)
+  with UnifyException e -> failwith e
 
 let inferTypeHMV e =
   let check (e : Debruijn.expr) = e in
   let open IntState in
-  snd (runState (inferType' check emptyCtx e) ~init:0)
+  try snd (runState (inferType' check emptyCtx e) ~init:0)
+  with UnifyException e -> failwith e

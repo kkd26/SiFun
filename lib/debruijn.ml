@@ -15,7 +15,8 @@ type expr =
   | TypeApp of expr * DBType.monoType
   | Lam of expr
 
-let emptyEnv s _ = failwith s
+let emptyEnvErrorMessage msg var = Printf.sprintf "%s: Unbound value %s" msg var
+let emptyEnv s var = failwith (emptyEnvErrorMessage s var)
 let update env x y = if y = x then 0 else 1 + env y
 
 let toDeBruijn =
@@ -42,7 +43,7 @@ let toDeBruijn =
         let newTypeCtx = update typeCtx v in
         Lam (toDeBruijn' ctx newTypeCtx e)
   in
-  toDeBruijn' (emptyEnv "empty var env") (emptyEnv "empty type env")
+  toDeBruijn' (emptyEnv "Empty var env") (emptyEnv "Empty type env")
 
 let rec exprToString = function
   | Int i -> "Int(" ^ string_of_int i ^ ")"

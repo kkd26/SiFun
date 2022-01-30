@@ -1,12 +1,20 @@
+let getPositionString (position : Lexing.position) =
+  Printf.sprintf "File \"%s\", line %d, character %d:" position.pos_fname
+    position.pos_lnum
+    (position.pos_cnum - position.pos_bol)
+
+let lexerErrorMessage (line : Lexing.lexbuf) msg =
+  let position = line.lex_curr_p in
+  Printf.sprintf "%s\n%s" (getPositionString position) msg
+
 (** Transforms Lexing buffer into a list of Abstract Syntax Trees*)
 let lexbufToExprList line =
   try Parser.start Lexer.read line with
-  | Lexer.SyntaxError msg -> failwith msg
+  | Lexer.SyntaxError m ->
+      let msg = lexerErrorMessage line m in
+      failwith msg
   | Parser.Error ->
-      let msg =
-        Printf.sprintf "At offset %d: syntax error.\n%!"
-          (Lexing.lexeme_start line)
-      in
+      let msg = lexerErrorMessage line "Syntax error" in
       failwith msg
 
 (** Parses a string into a list of AST *)
