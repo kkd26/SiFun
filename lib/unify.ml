@@ -13,23 +13,24 @@ let rec inType n t =
 let rec unifyOne (t1 : monoType) (t2 : monoType) : substitution =
   match (t1, t2) with
   | Int, Int | Bool, Bool | Unit, Unit -> emptySubst
-  | FreshVar n, FreshVar m -> if n = m then emptySubst else [(n, t2)]
-  | Fun (t3, t4), Fun (t5, t6) -> unify [(t3, t5); (t4, t6)]
-  | Pair (t3, t4), Pair (t5, t6) -> unify [(t3, t5); (t4, t6)]
+  | Var n, Var m -> if n = m then emptySubst else raise (UnifyException "")
+  | FreshVar n, FreshVar m -> if n = m then emptySubst else [ (n, t2) ]
+  | Fun (t3, t4), Fun (t5, t6) -> unify [ (t3, t5); (t4, t6) ]
+  | Pair (t3, t4), Pair (t5, t6) -> unify [ (t3, t5); (t4, t6) ]
   | ForAll t1, ForAll t2 -> unifyOne t1 t2
   | FreshVar n, t | t, FreshVar n -> (
-    try
-      let _ = inType n t in
-      [(n, t)]
-    with UnifyException e ->
-      raise
-        (UnifyException (e ^ typeExprToString t1 ^ " and " ^ typeExprToString t2)
-        ) )
+      try
+        let _ = inType n t in
+        [ (n, t) ]
+      with UnifyException e ->
+        raise
+          (UnifyException
+             (e ^ typeExprToString t1 ^ " and " ^ typeExprToString t2)))
   | _, _ ->
       raise
         (UnifyException
-           ( "Cannot unify " ^ typeExprToString t1 ^ " and "
-           ^ typeExprToString t2 ) )
+           ("Cannot unify " ^ typeExprToString t1 ^ " and "
+          ^ typeExprToString t2))
 
 and unify s : substitution =
   match s with
@@ -37,5 +38,6 @@ and unify s : substitution =
   | (x, y) :: t ->
       let t2 = unify t in
       let t1 =
-        unifyOne (applySubstToMonoType t2 x) (applySubstToMonoType t2 y) in
+        unifyOne (applySubstToMonoType t2 x) (applySubstToMonoType t2 y)
+      in
       t1 @ t2

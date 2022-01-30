@@ -15,7 +15,6 @@ let update env x y = if y = x then 0 else 1 + env y
 let rec toDeBruijn typeCtx : Type.monoType -> monoType = function
   | Int -> Int
   | Var v -> Var (typeCtx v)
-  | FreshVar v -> FreshVar v
   | Bool -> Bool
   | Unit -> Unit
   | Pair (t1, t2) -> Pair (toDeBruijn typeCtx t1, toDeBruijn typeCtx t2)
@@ -50,4 +49,4 @@ let rec typeExprToString = function
       let inner = typeExprToString t1 in
       (match t1 with Fun (_, _) -> "(" ^ inner ^ ")" | _ -> inner)
       ^ " -> " ^ typeExprToString t2
-  | ForAll t -> "∀." ^ typeExprToString t
+  | ForAll t -> "∀.(" ^ typeExprToString t ^ ")"

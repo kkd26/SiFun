@@ -12,7 +12,7 @@ let emptySubst : substitution = []
 
 let rec subst (s : monoType) (x : typeVar) (t : monoType) : monoType =
   match t with
-  | Var y -> if x = y then s else t
+  | FreshVar y -> if x = y then s else t
   | Fun (t1, t2) -> Fun (subst s x t1, subst s x t2)
   | Pair (t1, t2) -> Pair (subst s x t1, subst s x t2)
   | t -> t
@@ -28,7 +28,7 @@ let combineSubst s1 s2 : substitution =
 
 let substFromList list : substitution =
   let n = List.length list in
-  let range = List.init n (fun x -> -(x + 1)) in
+  let range = List.init n (fun x -> x) in
   List.combine range list
 
 exception TypeException
@@ -36,5 +36,6 @@ exception UnifyException of string
 
 let substToString =
   let elemToString a (x, t) =
-    a ^ string_of_int x ^ ":(" ^ typeExprToString t ^ ") " in
-  List.fold_left elemToString ""
+    a ^ string_of_int x ^ ":(" ^ typeExprToString t ^ ") "
+  in
+  List.fold_left elemToString "e "
