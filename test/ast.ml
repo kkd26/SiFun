@@ -204,6 +204,34 @@ let lambdaTypeWithForAll _ =
   (* ASSERT *)
   assert_equal expected output
 
+let newstedLambda _ =
+  (* ARRANGE *)
+  let input = "lam a b c. fn x : a => lam a b c d. fn y : a => x" in
+  let expected =
+    [
+      Lam
+        ( "a",
+          Lam
+            ( "b",
+              Lam
+                ( "c",
+                  FunType
+                    ( "x",
+                      Var "a",
+                      Lam
+                        ( "a",
+                          Lam
+                            ( "b",
+                              Lam
+                                ("c", Lam ("d", FunType ("y", Var "a", Var "x")))
+                            ) ) ) ) ) );
+    ]
+  in
+  (* ACT *)
+  let output = stringToExprList input in
+  (* ASSERT *)
+  assert_equal expected output
+
 let suite =
   "LexerAndParserTests"
   >::: [
@@ -229,6 +257,7 @@ let suite =
          "lambdaTypeAbstraction" >:: lambdaTypeAbstraction;
          "nestedLambdaTypeAbstraction" >:: nestedLambdaTypeAbstraction;
          "lambdaTypeWithForAll" >:: lambdaTypeWithForAll;
+         "newstedLambda" >:: newstedLambda;
        ]
 
 let () = run_test_tt_main suite
