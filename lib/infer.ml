@@ -58,7 +58,9 @@ let rec inferType' check (ctx : typeCtx) (e : Debruijn.expr) :
       let newCtx = updateCtx ctx t in
       inferType' check newCtx f >>= fun (s1, t1) ->
       return (s1, Fun (applySubstToMonoType s1 t, t1))
-  | Lam e -> inferType' check ctx e >>= fun (s1, t1) -> return (s1, ForAll t1)
+  | Lam e ->
+      inferType' check (shift 1 0 ctx) e >>= fun (s1, t1) ->
+      return (s1, ForAll t1)
 
 let inferType (e : Debruijn.expr) : substitution * monoType =
   let check (e : Debruijn.expr) =

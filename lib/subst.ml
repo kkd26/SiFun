@@ -5,6 +5,7 @@ type typeCtx = monoType list
 let emptyCtx : typeCtx = []
 let updateCtx (ctx : typeCtx) (t : monoType) = t :: ctx
 let find (x : int) (ctx : typeCtx) : monoType = List.nth ctx x
+let shift i c = List.map (shift i c)
 
 type substitution = (typeVar * monoType) list
 
