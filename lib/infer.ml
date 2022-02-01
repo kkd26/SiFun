@@ -25,7 +25,7 @@ let rec inferType' check (ctx : typeCtx) (e : Debruijn.expr) :
       inferType' check newCtx g >>= fun (s2, tg) ->
       freshName >>= fun x ->
       let tx = Fun (tg, FreshVar x) in
-      let s3 = unify [ (tx, applySubstToMonoType s2 tf) ] in
+      unify [ (tx, applySubstToMonoType s2 tf) ] >>= fun s3 ->
       return
         ( combineSubst s3 (combineSubst s2 s1),
           applySubstToMonoType s3 (FreshVar x) )
@@ -40,7 +40,7 @@ let rec inferType' check (ctx : typeCtx) (e : Debruijn.expr) :
       freshName >>= fun x ->
       freshName >>= fun y ->
       let tx = Pair (FreshVar x, FreshVar y) in
-      let s2 = unify [ (tx, t1) ] in
+      unify [ (tx, t1) ] >>= fun s2 ->
       let s3 = combineSubst s2 s1 in
       return
         ( s3,
@@ -50,7 +50,7 @@ let rec inferType' check (ctx : typeCtx) (e : Debruijn.expr) :
       inferType' check ctx e >>= fun (s1, t1) ->
       freshName >>= fun x ->
       let tx = ForAll (FreshVar x) in
-      let s2 = unify [ (tx, t1) ] in
+      unify [ (tx, t1) ] >>= fun s2 ->
       let s3 = combineSubst s2 s1 in
       let tw = DBType.subst t 0 (applySubstToMonoType s3 (FreshVar x)) in
       return (s3, tw)

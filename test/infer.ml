@@ -107,7 +107,7 @@ let inferNestedFunctionsWithApplication2 _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Fun (Fun (Fun (App (Fun (Var 0), Var 2)))) in
   let expected =
-    Fun (FreshVar 3, Fun (FreshVar 1, Fun (FreshVar 2, FreshVar 3)))
+    Fun (FreshVar 0, Fun (FreshVar 1, Fun (FreshVar 2, FreshVar 0)))
   in
   (* ACT *)
   let output = snd (inferType input) in
