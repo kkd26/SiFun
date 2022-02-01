@@ -34,6 +34,7 @@ rule read =
   | "->"          { TARR }
   | '.'           { DOT }
   | ';'           { SEMICOLON }
+  | ";;"          { EOF }
   | ':'           { COLON }
   | ','           { COMMA }
   | '('           { LPAR }
@@ -41,7 +42,7 @@ rule read =
   | '{'           { LCUR }
   | '}'           { RCUR }
   | int           { INT (int_of_string (Lexing.lexeme lexbuf)) }
-  | ident_reg_exp {VAR (Lexing.lexeme lexbuf)}
+  | ident_reg_exp { VAR (Lexing.lexeme lexbuf) }
   | newline       { next_line lexbuf; read lexbuf }
   | eof           { EOF }
   | _             { raise (SyntaxError ("Unexpected char: " ^ Lexing.lexeme lexbuf)) }
