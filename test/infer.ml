@@ -4,7 +4,7 @@ open DBType
 open Infer
 open OUnit2
 
-let parseUnit _ =
+let inferUnit _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Unit in
   let expected = Unit in
@@ -13,7 +13,7 @@ let parseUnit _ =
   (* ASSERT *)
   assert_equal expected output
 
-let parseBool _ =
+let inferBool _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Bool true in
   let expected = Bool in
@@ -22,7 +22,7 @@ let parseBool _ =
   (* ASSERT *)
   assert_equal expected output
 
-let parseInt1 _ =
+let inferInt1 _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Int 1 in
   let expected = Int in
@@ -31,7 +31,7 @@ let parseInt1 _ =
   (* ASSERT *)
   assert_equal expected output
 
-let parsePairInt1Int2 _ =
+let inferPairInt1Int2 _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Pair (Int 1, Int 2) in
   let expected = Pair (Int, Int) in
@@ -40,7 +40,7 @@ let parsePairInt1Int2 _ =
   (* ASSERT *)
   assert_equal expected output
 
-let parsePairUnitBoolFalse _ =
+let inferPairUnitBoolFalse _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Pair (Unit, Bool false) in
   let expected = Pair (Unit, Bool) in
@@ -49,7 +49,7 @@ let parsePairUnitBoolFalse _ =
   (* ASSERT *)
   assert_equal expected output
 
-let parseFunction _ =
+let inferFunction _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Fun (Var 0) in
   let expected = Fun (FreshVar 0, FreshVar 0) in
@@ -58,7 +58,7 @@ let parseFunction _ =
   (* ASSERT *)
   assert_equal expected output
 
-let parseFirst _ =
+let inferFirst _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Fst (Pair (Int 1, Int 2)) in
   let expected = Int in
@@ -67,7 +67,7 @@ let parseFirst _ =
   (* ASSERT *)
   assert_equal expected output
 
-let parseSecond _ =
+let inferSecond _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Snd (Pair (Bool true, Bool false)) in
   let expected = Bool in
@@ -76,7 +76,7 @@ let parseSecond _ =
   (* ASSERT *)
   assert_equal expected output
 
-let parseNestedFunctions _ =
+let inferNestedFunctions _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Fun (Fun (Fun (Var 0))) in
   let expected =
@@ -87,7 +87,7 @@ let parseNestedFunctions _ =
   (* ASSERT *)
   assert_equal expected output
 
-let parseNestedFunctionsWithApplication _ =
+let inferNestedFunctionsWithApplication _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Fun (Fun (Fun (Fun (App (Var 0, Var 3))))) in
   let expected =
@@ -103,18 +103,18 @@ let parseNestedFunctionsWithApplication _ =
   (* ASSERT *)
   assert_equal expected output
 
-let parseNestedFunctionsWithApplication2 _ =
+let inferNestedFunctionsWithApplication2 _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Fun (Fun (Fun (App (Fun (Var 0), Var 2)))) in
   let expected =
-    Fun (FreshVar 0, Fun (FreshVar 1, Fun (FreshVar 2, FreshVar 0)))
+    Fun (FreshVar 3, Fun (FreshVar 1, Fun (FreshVar 2, FreshVar 3)))
   in
   (* ACT *)
   let output = snd (inferType input) in
   (* ASSERT *)
   assert_equal expected output
 
-let parseApplication _ =
+let inferApplication _ =
   (* ARRANGE *)
   let input : Debruijn.expr =
     Fun (Fun (Fun (App (App (Var 2, Var 1), Var 0))))
@@ -129,10 +129,10 @@ let parseApplication _ =
   (* ASSERT *)
   assert_equal expected output
 
-let parseExprInParenthesis _ =
+let inferExprInParenthesis _ =
   (* ARRANGE *)
   let input : Debruijn.expr = App (Int 1, Int 2) in
-  let expected = Failure "Cannot unify int and int -> f0" in
+  let expected = Failure "Cannot unify int -> f0 and int" in
   (* ACT *)
   let output _ = snd (inferType input) in
   (* ASSERT *)
@@ -239,21 +239,21 @@ let nestedLambda _ =
 let suite =
   "DeBruijnTransformTest"
   >::: [
-         "parseFunction" >:: parseFunction;
-         "parseInt1" >:: parseInt1;
-         "parsePairInt1Int2\n      " >:: parsePairInt1Int2;
-         "parseFirst" >:: parseFirst;
-         "parseNestedFunctions" >:: parseNestedFunctions;
-         "parseNestedFunctionsWithApplication"
-         >:: parseNestedFunctionsWithApplication;
-         "parseNestedFunctionsWithApplication2"
-         >:: parseNestedFunctionsWithApplication2;
-         "parseApplication" >:: parseApplication;
-         "parseUnit" >:: parseUnit;
-         "parseBool" >:: parseBool;
-         "parsePairUnitBoolFalse" >:: parsePairUnitBoolFalse;
-         "parseSecond" >:: parseSecond;
-         "parseExprInParenthesis" >:: parseExprInParenthesis;
+         "inferFunction" >:: inferFunction;
+         "inferInt1" >:: inferInt1;
+         "inferPairInt1Int2\n      " >:: inferPairInt1Int2;
+         "inferFirst" >:: inferFirst;
+         "inferNestedFunctions" >:: inferNestedFunctions;
+         "inferNestedFunctionsWithApplication"
+         >:: inferNestedFunctionsWithApplication;
+         "inferNestedFunctionsWithApplication2"
+         >:: inferNestedFunctionsWithApplication2;
+         "inferApplication" >:: inferApplication;
+         "inferUnit" >:: inferUnit;
+         "inferBool" >:: inferBool;
+         "inferPairUnitBoolFalse" >:: inferPairUnitBoolFalse;
+         "inferSecond" >:: inferSecond;
+         "inferExprInParenthesis" >:: inferExprInParenthesis;
          "firstAndApplication" >:: firstAndApplication;
          "firstAndTypeApplication" >:: firstAndTypeApplication;
          "firstAndTypeApplication2" >:: firstAndTypeApplication2;

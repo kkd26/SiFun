@@ -3,7 +3,7 @@ open Ast
 open Debruijn
 open OUnit2
 
-let parseUnit _ =
+let toDeBruijnUnit _ =
   (* ARRANGE *)
   let input : Ast.expr = Unit in
   let expected = Unit in
@@ -12,7 +12,7 @@ let parseUnit _ =
   (* ASSERT *)
   assert_equal expected output
 
-let parseBool _ =
+let toDeBruijnBool _ =
   (* ARRANGE *)
   let input : Ast.expr = Bool true in
   let expected = Bool true in
@@ -21,7 +21,7 @@ let parseBool _ =
   (* ASSERT *)
   assert_equal expected output
 
-let parseInt1 _ =
+let toDeBruijnInt1 _ =
   (* ARRANGE *)
   let input : Ast.expr = Int 1 in
   let expected = Int 1 in
@@ -30,7 +30,7 @@ let parseInt1 _ =
   (* ASSERT *)
   assert_equal expected output
 
-let parsePairInt1Int2 _ =
+let toDeBruijnPairInt1Int2 _ =
   (* ARRANGE *)
   let input : Ast.expr = Pair (Int 1, Int 2) in
   let expected = Pair (Int 1, Int 2) in
@@ -39,7 +39,7 @@ let parsePairInt1Int2 _ =
   (* ASSERT *)
   assert_equal expected output
 
-let parsePairUnitBoolFalse _ =
+let toDeBruijnPairUnitBoolFalse _ =
   (* ARRANGE *)
   let input : Ast.expr = Pair (Unit, Bool false) in
   let expected = Pair (Unit, Bool false) in
@@ -48,7 +48,7 @@ let parsePairUnitBoolFalse _ =
   (* ASSERT *)
   assert_equal expected output
 
-let parseFunction _ =
+let toDeBruijnFunction _ =
   (* ARRANGE *)
   let input : Ast.expr = Fun ("x", Var "x") in
   let expected = Fun (Var 0) in
@@ -57,7 +57,7 @@ let parseFunction _ =
   (* ASSERT *)
   assert_equal expected output
 
-let parseFirst _ =
+let toDeBruijnFirst _ =
   (* ARRANGE *)
   let input : Ast.expr = Fst (Pair (Int 1, Int 2)) in
   let expected = Fst (Pair (Int 1, Int 2)) in
@@ -66,7 +66,7 @@ let parseFirst _ =
   (* ASSERT *)
   assert_equal expected output
 
-let parseSecond _ =
+let toDeBruijnSecond _ =
   (* ARRANGE *)
   let input : Ast.expr = Snd (Pair (Bool true, Bool false)) in
   let expected = Snd (Pair (Bool true, Bool false)) in
@@ -75,7 +75,7 @@ let parseSecond _ =
   (* ASSERT *)
   assert_equal expected output
 
-let parseNestedFunctions _ =
+let toDeBruijnNestedFunctions _ =
   (* ARRANGE *)
   let input : Ast.expr = Fun ("x", Fun ("x", Fun ("x", Var "x"))) in
   let expected = Fun (Fun (Fun (Var 0))) in
@@ -84,7 +84,7 @@ let parseNestedFunctions _ =
   (* ASSERT *)
   assert_equal expected output
 
-let parseNestedFunctionsWithApplication _ =
+let toDeBruijnNestedFunctionsWithApplication _ =
   (* ARRANGE *)
   let input : Ast.expr =
     Fun ("y", Fun ("x", Fun ("x", Fun ("x", App (Var "x", Var "y")))))
@@ -95,7 +95,7 @@ let parseNestedFunctionsWithApplication _ =
   (* ASSERT *)
   assert_equal expected output
 
-let parseNestedFunctionsWithApplication2 _ =
+let toDeBruijnNestedFunctionsWithApplication2 _ =
   (* ARRANGE *)
   let input : Ast.expr =
     Fun ("y", Fun ("x", Fun ("x", App (Fun ("x", Var "x"), Var "y"))))
@@ -106,7 +106,7 @@ let parseNestedFunctionsWithApplication2 _ =
   (* ASSERT *)
   assert_equal expected output
 
-let parseApplication _ =
+let toDeBruijnApplication _ =
   (* ARRANGE *)
   let input : Ast.expr =
     Fun ("x", Fun ("y", Fun ("z", App (App (Var "x", Var "y"), Var "z"))))
@@ -117,7 +117,7 @@ let parseApplication _ =
   (* ASSERT *)
   assert_equal expected output
 
-let parseExprInParenthesis _ =
+let toDeBruijnExprInParenthesis _ =
   (* ARRANGE *)
   let input : Ast.expr = App (Int 1, Int 2) in
   let expected = App (Int 1, Int 2) in
@@ -243,21 +243,21 @@ let nestedLambda _ =
 let suite =
   "DeBruijnTransformTest"
   >::: [
-         "parseFunction" >:: parseFunction;
-         "parseInt1" >:: parseInt1;
-         "parsePairInt1Int2\n      " >:: parsePairInt1Int2;
-         "parseFirst" >:: parseFirst;
-         "parseNestedFunctions" >:: parseNestedFunctions;
-         "parseNestedFunctionsWithApplication"
-         >:: parseNestedFunctionsWithApplication;
-         "parseNestedFunctionsWithApplication2"
-         >:: parseNestedFunctionsWithApplication2;
-         "parseApplication" >:: parseApplication;
-         "parseUnit" >:: parseUnit;
-         "parseBool" >:: parseBool;
-         "parsePairUnitBoolFalse" >:: parsePairUnitBoolFalse;
-         "parseSecond" >:: parseSecond;
-         "parseExprInParenthesis" >:: parseExprInParenthesis;
+         "toDeBruijnFunction" >:: toDeBruijnFunction;
+         "toDeBruijnInt1" >:: toDeBruijnInt1;
+         "toDeBruijnPairInt1Int2\n      " >:: toDeBruijnPairInt1Int2;
+         "toDeBruijnFirst" >:: toDeBruijnFirst;
+         "toDeBruijnNestedFunctions" >:: toDeBruijnNestedFunctions;
+         "toDeBruijnNestedFunctionsWithApplication"
+         >:: toDeBruijnNestedFunctionsWithApplication;
+         "toDeBruijnNestedFunctionsWithApplication2"
+         >:: toDeBruijnNestedFunctionsWithApplication2;
+         "toDeBruijnApplication" >:: toDeBruijnApplication;
+         "toDeBruijnUnit" >:: toDeBruijnUnit;
+         "toDeBruijnBool" >:: toDeBruijnBool;
+         "toDeBruijnPairUnitBoolFalse" >:: toDeBruijnPairUnitBoolFalse;
+         "toDeBruijnSecond" >:: toDeBruijnSecond;
+         "toDeBruijnExprInParenthesis" >:: toDeBruijnExprInParenthesis;
          "firstAndApplication" >:: firstAndApplication;
          "firstAndTypeApplication" >:: firstAndTypeApplication;
          "firstAndTypeApplication2" >:: firstAndTypeApplication2;
