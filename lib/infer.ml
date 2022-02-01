@@ -25,7 +25,7 @@ let rec inferType' check (ctx : typeCtx) (e : Debruijn.expr) :
       inferType' check newCtx g >>= fun (s2, tg) ->
       freshName >>= fun x ->
       let tx = Fun (tg, FreshVar x) in
-      let s3 = unify [ (applySubstToMonoType s2 tf, tx) ] in
+      let s3 = unify [ (tx, applySubstToMonoType s2 tf) ] in
       return
         ( combineSubst s3 (combineSubst s2 s1),
           applySubstToMonoType s3 (FreshVar x) )
@@ -75,5 +75,9 @@ let inferType (e : Debruijn.expr) : substitution * monoType =
 let inferTypeHMV e =
   let check (e : Debruijn.expr) = e in
   let open IntState in
-  try snd (runState (inferType' check emptyCtx e) ~init:0)
-  with UnifyException e -> failwith e
+  try
+    let subs, typ = snd (runState (inferType' check emptyCtx e) ~init:0) in
+    if verifyType typ then (subs, typ) else raise TypeException
+  with
+  | UnifyException e -> failwith e
+  | TypeException -> failwith "incorrect type"

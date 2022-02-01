@@ -37,6 +37,16 @@ let rec subst t n = function
   | Fun (t1, t2) -> Fun (subst t n t1, subst t n t2)
   | ForAll t1 -> ForAll (subst (shift 1 0 t) (n + 1) t1)
 
+let verifyType =
+  let rec verifyType' typeCtx = function
+    | Var v -> v < typeCtx
+    | FreshVar _ | Int | Bool | Unit -> true
+    | Pair (e1, e2) -> verifyType' typeCtx e1 && verifyType' typeCtx e2
+    | Fun (e1, e2) -> verifyType' typeCtx e1 && verifyType' typeCtx e2
+    | ForAll t -> verifyType' (typeCtx + 1) t
+  in
+  verifyType' 0
+
 let incChar c = String.make 1 (Char.chr (c + Char.code 'a'))
 
 let rec typeExprToString' var = function
