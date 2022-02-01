@@ -1,3 +1,3 @@
 (tests
- (names ast debruijn unify)
+ (names ast debruijn unify infer)
  (libraries sifun ounit2))
