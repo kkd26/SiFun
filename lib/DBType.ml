@@ -39,19 +39,19 @@ let rec subst t n = function
 
 let incChar c = String.make 1 (Char.chr (c + Char.code 'a'))
 
-let typeExprToString =
-  let rec typeExprToString' var = function
-    | Var s -> incChar (var - s - 1)
-    | FreshVar s -> "f" ^ string_of_int s
-    | Int -> "int"
-    | Bool -> "bool"
-    | Unit -> "unit"
-    | Pair (t1, t2) ->
-        "(" ^ typeExprToString' var t1 ^ ", " ^ typeExprToString' var t2 ^ ")"
-    | Fun (t1, t2) ->
-        let inner = typeExprToString' var t1 in
-        (match t1 with Fun (_, _) -> "(" ^ inner ^ ")" | _ -> inner)
-        ^ " -> " ^ typeExprToString' var t2
-    | ForAll t -> "∀" ^ incChar var ^ ".(" ^ typeExprToString' (var + 1) t ^ ")"
-  in
-  typeExprToString' 0
+let rec typeExprToString' var = function
+  | Var s -> incChar (var - s - 1)
+  | FreshVar s -> "f" ^ string_of_int s
+  | Int -> "int"
+  | Bool -> "bool"
+  | Unit -> "unit"
+  | Pair (t1, t2) ->
+      "(" ^ typeExprToString' var t1 ^ ", " ^ typeExprToString' var t2 ^ ")"
+  | Fun (t1, t2) ->
+      let inner = typeExprToString' var t1 in
+      (match t1 with Fun (_, _) -> "(" ^ inner ^ ")" | _ -> inner)
+      ^ " -> " ^ typeExprToString' var t2
+  | ForAll t ->
+      "forall " ^ incChar var ^ ".(" ^ typeExprToString' (var + 1) t ^ ")"
+
+let typeExprToString = typeExprToString' 0

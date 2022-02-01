@@ -45,21 +45,44 @@ let toDeBruijn =
   in
   toDeBruijn' (emptyEnv "Empty var env") (emptyEnv "Empty type env")
 
-let rec exprToString = function
-  | Int i -> "Int(" ^ string_of_int i ^ ")"
-  | Var v -> "Var(" ^ string_of_int v ^ ")"
-  | Bool b -> "Bool(" ^ string_of_bool b ^ ")"
-  | Unit -> "Unit"
-  | Pair (e1, e2) -> "Pair(" ^ exprToString e1 ^ "," ^ exprToString e2 ^ ")"
-  | Fst e -> "Fst(" ^ exprToString e ^ ")"
-  | Snd e -> "Snd(" ^ exprToString e ^ ")"
-  | Fun e -> "Fun(" ^ exprToString e ^ ")"
-  | FunType (t, e) ->
-      "FunType(" ^ DBType.typeExprToString t ^ "," ^ exprToString e ^ ")"
-  | App (e1, e2) -> "App(" ^ exprToString e1 ^ "," ^ exprToString e2 ^ ")"
-  | TypeApp (e, t) ->
-      "TypeApp(" ^ exprToString e ^ ", " ^ DBType.typeExprToString t ^ ")"
-  | Lam e -> "L " ^ "." ^ exprToString e
+let exprToString =
+  let rec exprToString' typeVar var = function
+    | Int i -> string_of_int i
+    | Var v -> DBType.incChar (var - v - 1)
+    | Bool b -> string_of_bool b
+    | Unit -> "()"
+    | Pair (e1, e2) ->
+        "("
+        ^ exprToString' typeVar var e1
+        ^ ","
+        ^ exprToString' typeVar var e2
+        ^ ")"
+    | Fst e -> "fst " ^ exprToString' typeVar var e
+    | Snd e -> "snd " ^ exprToString' typeVar var e
+    | Fun e ->
+        "fn " ^ DBType.incChar var ^ " => " ^ exprToString' typeVar (var + 1) e
+    | FunType (t, e) ->
+        "fn " ^ DBType.incChar var ^ " : "
+        ^ DBType.typeExprToString' typeVar t
+        ^ " => "
+        ^ exprToString' typeVar (var + 1) e
+    | App (e1, e2) ->
+        "("
+        ^ exprToString' typeVar var e1
+        ^ ") ("
+        ^ exprToString' typeVar var e2
+        ^ ")"
+    | TypeApp (e, t) ->
+        "("
+        ^ exprToString' typeVar var e
+        ^ ") {"
+        ^ DBType.typeExprToString' typeVar t
+        ^ "}"
+    | Lam e ->
+        "lam " ^ DBType.incChar typeVar ^ "."
+        ^ exprToString' (typeVar + 1) var e
+  in
+  exprToString' 0 16
 
 let rec exprListToString = function
   | [] -> ""
