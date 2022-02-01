@@ -188,7 +188,6 @@ let nestedLambdaTypeAbstraction _ =
   let expected =
     Lam (Lam (Lam (FunType (Var 1, Fun (FunType (Var 2, Int 1))))))
   in
-
   (* ACT *)
   let output = toDeBruijn input in
   (* ASSERT *)
@@ -207,13 +206,12 @@ let lambdaTypeWithForAll _ =
   let expected =
     Lam (FunType (ForAll (ForAll (ForAll (Fun (Var 2, Var 1)))), Var 0))
   in
-
   (* ACT *)
   let output = toDeBruijn input in
   (* ASSERT *)
   assert_equal expected output
 
-let newstedLambda _ =
+let nestedLambda _ =
   (* ARRANGE *)
   let input : Ast.expr =
     Lam
@@ -237,7 +235,6 @@ let newstedLambda _ =
       (Lam
          (Lam (FunType (Var 2, Lam (Lam (Lam (Lam (FunType (Var 3, Var 1)))))))))
   in
-
   (* ACT *)
   let output = toDeBruijn input in
   (* ASSERT *)
@@ -268,7 +265,7 @@ let suite =
          "lambdaTypeAbstraction" >:: lambdaTypeAbstraction;
          "nestedLambdaTypeAbstraction" >:: nestedLambdaTypeAbstraction;
          "lambdaTypeWithForAll" >:: lambdaTypeWithForAll;
-         "newstedLambda" >:: newstedLambda;
+         "nestedLambda" >:: nestedLambda;
        ]
 
 let () = run_test_tt_main suite

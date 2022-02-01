@@ -204,7 +204,7 @@ let lambdaTypeWithForAll _ =
   (* ASSERT *)
   assert_equal expected output
 
-let newstedLambda _ =
+let nestedLambda _ =
   (* ARRANGE *)
   let input = "lam a b c. fn x : a => lam a b c d. fn y : a => x" in
   let expected =
@@ -257,7 +257,7 @@ let suite =
          "lambdaTypeAbstraction" >:: lambdaTypeAbstraction;
          "nestedLambdaTypeAbstraction" >:: nestedLambdaTypeAbstraction;
          "lambdaTypeWithForAll" >:: lambdaTypeWithForAll;
-         "newstedLambda" >:: newstedLambda;
+         "nestedLambda" >:: nestedLambda;
        ]
 
 let () = run_test_tt_main suite
