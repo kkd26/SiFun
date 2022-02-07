@@ -7,7 +7,7 @@ open OUnit2
 let inferUnit _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Unit in
-  let expected = Unit in
+  let expected = Mono Unit in
   (* ACT *)
   let output = snd (inferType input) in
   (* ASSERT *)
@@ -16,7 +16,7 @@ let inferUnit _ =
 let inferBool _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Bool true in
-  let expected = Bool in
+  let expected = Mono Bool in
   (* ACT *)
   let output = snd (inferType input) in
   (* ASSERT *)
@@ -25,7 +25,7 @@ let inferBool _ =
 let inferInt1 _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Int 1 in
-  let expected = Int in
+  let expected = Mono Int in
   (* ACT *)
   let output = snd (inferType input) in
   (* ASSERT *)
@@ -34,7 +34,7 @@ let inferInt1 _ =
 let inferPairInt1Int2 _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Pair (Int 1, Int 2) in
-  let expected = Pair (Int, Int) in
+  let expected = Mono (Pair (Int, Int)) in
   (* ACT *)
   let output = snd (inferType input) in
   (* ASSERT *)
@@ -43,7 +43,7 @@ let inferPairInt1Int2 _ =
 let inferPairUnitBoolFalse _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Pair (Unit, Bool false) in
-  let expected = Pair (Unit, Bool) in
+  let expected = Mono (Pair (Unit, Bool)) in
   (* ACT *)
   let output = snd (inferType input) in
   (* ASSERT *)
@@ -52,7 +52,7 @@ let inferPairUnitBoolFalse _ =
 let inferFunction _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Fun (Var 0) in
-  let expected = Fun (FreshVar 0, FreshVar 0) in
+  let expected = Mono (Fun (FreshVar 0, FreshVar 0)) in
   (* ACT *)
   let output = snd (inferType input) in
   (* ASSERT *)
@@ -61,7 +61,7 @@ let inferFunction _ =
 let inferFirst _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Fst (Pair (Int 1, Int 2)) in
-  let expected = Int in
+  let expected = Mono Int in
   (* ACT *)
   let output = snd (inferType input) in
   (* ASSERT *)
@@ -70,7 +70,7 @@ let inferFirst _ =
 let inferSecond _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Snd (Pair (Bool true, Bool false)) in
-  let expected = Bool in
+  let expected = Mono Bool in
   (* ACT *)
   let output = snd (inferType input) in
   (* ASSERT *)
@@ -80,7 +80,7 @@ let inferNestedFunctions _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Fun (Fun (Fun (Var 0))) in
   let expected =
-    Fun (FreshVar 0, Fun (FreshVar 1, Fun (FreshVar 2, FreshVar 2)))
+    Mono (Fun (FreshVar 0, Fun (FreshVar 1, Fun (FreshVar 2, FreshVar 2))))
   in
   (* ACT *)
   let output = snd (inferType input) in
@@ -91,12 +91,13 @@ let inferNestedFunctionsWithApplication _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Fun (Fun (Fun (Fun (App (Var 0, Var 3))))) in
   let expected =
-    Fun
-      ( FreshVar 0,
-        Fun
-          ( FreshVar 1,
-            Fun (FreshVar 2, Fun (Fun (FreshVar 0, FreshVar 4), FreshVar 4)) )
-      )
+    Mono
+      (Fun
+         ( FreshVar 0,
+           Fun
+             ( FreshVar 1,
+               Fun (FreshVar 2, Fun (Fun (FreshVar 0, FreshVar 4), FreshVar 4))
+             ) ))
   in
   (* ACT *)
   let output = snd (inferType input) in
@@ -107,7 +108,7 @@ let inferNestedFunctionsWithApplication2 _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Fun (Fun (Fun (App (Fun (Var 0), Var 2)))) in
   let expected =
-    Fun (FreshVar 0, Fun (FreshVar 1, Fun (FreshVar 2, FreshVar 0)))
+    Mono (Fun (FreshVar 3, Fun (FreshVar 1, Fun (FreshVar 2, FreshVar 3))))
   in
   (* ACT *)
   let output = snd (inferType input) in
@@ -120,9 +121,10 @@ let inferApplication _ =
     Fun (Fun (Fun (App (App (Var 2, Var 1), Var 0))))
   in
   let expected =
-    Fun
-      ( Fun (FreshVar 1, Fun (FreshVar 2, FreshVar 4)),
-        Fun (FreshVar 1, Fun (FreshVar 2, FreshVar 4)) )
+    Mono
+      (Fun
+         ( Fun (FreshVar 1, Fun (FreshVar 2, FreshVar 4)),
+           Fun (FreshVar 1, Fun (FreshVar 2, FreshVar 4)) ))
   in
   (* ACT *)
   let output = snd (inferType input) in
@@ -142,9 +144,10 @@ let firstAndApplication _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Fun (Fun (App (Fst (Var 1), Var 0))) in
   let expected =
-    Fun
-      ( Pair (Fun (FreshVar 1, FreshVar 4), FreshVar 3),
-        Fun (FreshVar 1, FreshVar 4) )
+    Mono
+      (Fun
+         ( Pair (Fun (FreshVar 1, FreshVar 4), FreshVar 3),
+           Fun (FreshVar 1, FreshVar 4) ))
   in
   (* ACT *)
   let output = snd (inferType input) in
@@ -153,28 +156,28 @@ let firstAndApplication _ =
 
 let firstAndTypeApplication _ =
   (* ARRANGE *)
-  let input : Debruijn.expr = Fun (TypeApp (Fst (Var 0), Int)) in
-  let expected = Int in
+  let input : Debruijn.expr = Fun (TypeApp (Fst (Var 0), Mono Int)) in
+  let expected = Failure "Different size" in
   (* ACT *)
-  let _ = snd (inferTypeHMV input) in
+  let output _ = snd (inferTypeHMV input) in
   (* ASSERT *)
-  assert_equal expected expected
+  assert_raises expected output
 
 let firstAndTypeApplication2 _ =
   (* ARRANGE *)
   let input : Debruijn.expr =
-    Fun (TypeApp (TypeApp (Fst (Var 0), Int), Bool))
+    Fun (TypeApp (TypeApp (Fst (Var 0), Mono Int), Mono Bool))
   in
-  let expected = Int in
+  let expected = Failure "Different size" in
   (* ACT *)
-  let _ = snd (inferTypeHMV input) in
+  let output _ = snd (inferTypeHMV input) in
   (* ASSERT *)
-  assert_equal expected expected
+  assert_raises expected output
 
 let typedFunction _ =
   (* ARRANGE *)
-  let input : Debruijn.expr = FunType (Int, Var 0) in
-  let expected = Fun (Int, Int) in
+  let input : Debruijn.expr = FunType (Mono Int, Var 0) in
+  let expected = Mono (Fun (Int, Int)) in
   (* ACT *)
   let output = snd (inferTypeHMV input) in
   (* ASSERT *)
@@ -182,8 +185,8 @@ let typedFunction _ =
 
 let lambdaTypeAbstraction _ =
   (* ARRANGE *)
-  let input : Debruijn.expr = Lam (FunType (Var 0, Var 0)) in
-  let expected = ForAll (Fun (Var 0, Var 0)) in
+  let input : Debruijn.expr = Lam (FunType (Mono (Var 0), Var 0)) in
+  let expected = Poly (1, T (Fun (Var 0, Var 0))) in
   (* ACT *)
   let output = snd (inferTypeHMV input) in
   (* ASSERT *)
@@ -192,10 +195,11 @@ let lambdaTypeAbstraction _ =
 let nestedLambdaTypeAbstraction _ =
   (* ARRANGE *)
   let input : Debruijn.expr =
-    Lam (Lam (Lam (FunType (Var 1, Fun (FunType (Var 2, Int 1))))))
+    Lam
+      (Lam (Lam (FunType (Mono (Var 1), Fun (FunType (Mono (Var 2), Int 1))))))
   in
   let expected =
-    ForAll (ForAll (ForAll (Fun (Var 1, Fun (FreshVar 0, Fun (Var 2, Int))))))
+    Poly (3, T (Fun (Var 1, Fun (FreshVar 0, Fun (Var 2, Int)))))
   in
   (* ACT *)
   let output = snd (inferTypeHMV input) in
@@ -205,13 +209,10 @@ let nestedLambdaTypeAbstraction _ =
 let lambdaTypeWithForAll _ =
   (* ARRANGE *)
   let input : Debruijn.expr =
-    Lam (FunType (ForAll (ForAll (ForAll (Fun (Var 2, Var 1)))), Var 0))
+    Lam (FunType (Poly (3, T (Fun (Var 2, Var 1))), Var 0))
   in
   let expected =
-    ForAll
-      (Fun
-         ( ForAll (ForAll (ForAll (Fun (Var 2, Var 1)))),
-           ForAll (ForAll (ForAll (Fun (Var 2, Var 1)))) ))
+    Poly (1, F ((3, T (Fun (Var 2, Var 1))), (3, T (Fun (Var 2, Var 1)))))
   in
   (* ACT *)
   let output = snd (inferTypeHMV input) in
@@ -223,14 +224,12 @@ let nestedLambda _ =
   let input : Debruijn.expr =
     Lam
       (Lam
-         (Lam (FunType (Var 2, Lam (Lam (Lam (Lam (FunType (Var 3, Var 1)))))))))
+         (Lam
+            (FunType
+               ( Mono (Var 2),
+                 Lam (Lam (Lam (Lam (FunType (Mono (Var 3), Var 1))))) ))))
   in
-  let expected =
-    ForAll
-      (ForAll
-         (ForAll
-            (Fun (Var 2, ForAll (ForAll (ForAll (ForAll (Fun (Var 3, Var 6)))))))))
-  in
+  let expected = Poly (3, F ((0, T (Var 2)), (4, T (Fun (Var 3, Var 6))))) in
   (* ACT *)
   let output = snd (inferTypeHMV input) in
   (* ASSERT *)

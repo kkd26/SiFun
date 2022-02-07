@@ -28,11 +28,13 @@ let combine l a =
          l)
 
 let combinedTypes1 = combine basicTypes constructors
-let combinedTypes2 = combine combinedTypes1 constructors
+
+let combinedTypes2 =
+  List.map (fun x -> Mono x) (combine combinedTypes1 constructors)
 
 let compareSubstitutions s1 s2 =
   List.for_all
-    (fun x -> applySubstToMonoType s1 x = applySubstToMonoType s2 x)
+    (fun x -> applySubstToTypeKind s1 x = applySubstToTypeKind s2 x)
     combinedTypes2
 
 let unifyHelper t1 t2 = snd (State.IntState.runState (unifyOne t1 t2) ~init:0)
@@ -41,7 +43,7 @@ let unifyIntWithInt _ =
   (* ARRANGE *)
   let expected = emptySubst in
   (* ACT *)
-  let output = unifyHelper Int Int in
+  let output = unifyHelper (Mono Int) (Mono Int) in
   (* ASSERT *)
   assert_bool "Incorrect" (compareSubstitutions expected output)
 
@@ -49,59 +51,65 @@ let unifyIntWithBool _ =
   (* ARRANGE *)
   let expected = UnifyException "Cannot unify int and bool" in
   (* ACT *)
-  let output _ = unifyHelper Int Bool in
+  let output _ = unifyHelper (Mono Int) (Mono Bool) in
   (* ASSERT *)
   assert_raises expected output
 
 let unifyVar0WithVar1 _ =
   (* ARRANGE *)
-  let expected = substFromList [ FreshVar 1 ] in
+  let expected = substFromList [ Mono (FreshVar 1) ] in
   (* ACT *)
-  let output = unifyHelper (FreshVar 0) (FreshVar 1) in
+  let output = unifyHelper (Mono (FreshVar 0)) (Mono (FreshVar 1)) in
   (* ASSERT *)
   assert_bool "Incorrect" (compareSubstitutions expected output)
 
 let unifyFunVar0BoolWithFunIntVar1 _ =
   (* ARRANGE *)
-  let expected = substFromList [ Int; Bool ] in
+  let expected = substFromList [ Mono Int; Mono Bool ] in
   (* ACT *)
-  let output = unifyHelper (Fun (FreshVar 0, Bool)) (Fun (Int, FreshVar 1)) in
+  let output =
+    unifyHelper (Mono (Fun (FreshVar 0, Bool))) (Mono (Fun (Int, FreshVar 1)))
+  in
   (* ASSERT *)
   assert_bool "Incorrect" (compareSubstitutions expected output)
 
 let unifyPairVar2BoolWithPairIntVar1 _ =
   (* ARRANGE *)
-  let expected = substFromList [ FreshVar 0; Bool; Int ] in
+  let expected = substFromList [ Mono (FreshVar 0); Mono Bool; Mono Int ] in
   (* ACT *)
-  let output = unifyHelper (Pair (FreshVar 2, Bool)) (Pair (Int, FreshVar 1)) in
+  let output =
+    unifyHelper (Mono (Pair (FreshVar 2, Bool))) (Mono (Pair (Int, FreshVar 1)))
+  in
   (* ASSERT *)
   assert_bool "Incorrect" (compareSubstitutions expected output)
 
 let unifyPairVar2BoolWithVar0 _ =
   (* ARRANGE *)
-  let expected = substFromList [ Pair (FreshVar 2, Bool) ] in
+  let expected = substFromList [ Mono (Pair (FreshVar 2, Bool)) ] in
   (* ACT *)
-  let output = unifyHelper (Pair (FreshVar 2, Bool)) (FreshVar 0) in
+  let output =
+    unifyHelper (Mono (Pair (FreshVar 2, Bool))) (Mono (FreshVar 0))
+  in
   (* ASSERT *)
   assert_bool "Incorrect" (compareSubstitutions expected output)
 
 let unifyFunFunVar0Var0Var0WithFunVar1Int _ =
   (* ARRANGE *)
-  let expected = substFromList [ Int; Fun (Int, Int) ] in
+  let expected = substFromList [ Mono Int; Mono (Fun (Int, Int)) ] in
   (* ACT *)
   let output =
     unifyHelper
-      (Fun (Fun (FreshVar 0, FreshVar 0), FreshVar 0))
-      (Fun (FreshVar 1, Int))
+      (Mono (Fun (Fun (FreshVar 0, FreshVar 0), FreshVar 0)))
+      (Mono (Fun (FreshVar 1, Int)))
   in
   (* ASSERT *)
   assert_bool "Incorrect" (compareSubstitutions expected output)
 
 let unifyForAllInt _ =
   (* ARRANGE *)
-  let expected = substFromList [ Int ] in
+  let expected = substFromList [ Mono Int ] in
   (* ACT *)
-  let output = unifyHelper (ForAll (Var 0)) (ForAll Int) in
+  let output = unifyHelper (Poly (1, T (Var 0))) (Poly (1, T Int)) in
   (* ASSERT *)
   assert_bool "Incorrect" (compareSubstitutions expected output)
 

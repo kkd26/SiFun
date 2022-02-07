@@ -138,7 +138,7 @@ let firstAndApplication _ =
 let firstAndTypeApplication _ =
   (* ARRANGE *)
   let input : Ast.expr = Fun ("x", TypeApp (Fst (Var "x"), Int)) in
-  let expected = Fun (TypeApp (Fst (Var 0), Int)) in
+  let expected = Fun (TypeApp (Fst (Var 0), Mono Int)) in
   (* ACT *)
   let output = toDeBruijn input in
   (* ASSERT *)
@@ -149,7 +149,7 @@ let firstAndTypeApplication2 _ =
   let input : Ast.expr =
     Fun ("x", TypeApp (TypeApp (Fst (Var "x"), Int), Bool))
   in
-  let expected = Fun (TypeApp (TypeApp (Fst (Var 0), Int), Bool)) in
+  let expected = Fun (TypeApp (TypeApp (Fst (Var 0), Mono Int), Mono Bool)) in
   (* ACT *)
   let output = toDeBruijn input in
   (* ASSERT *)
@@ -158,7 +158,7 @@ let firstAndTypeApplication2 _ =
 let typedFunction _ =
   (* ARRANGE *)
   let input : Ast.expr = FunType ("x", Int, Var "x") in
-  let expected = FunType (Int, Var 0) in
+  let expected = FunType (Mono Int, Var 0) in
   (* ACT *)
   let output = toDeBruijn input in
   (* ASSERT *)
@@ -167,7 +167,7 @@ let typedFunction _ =
 let lambdaTypeAbstraction _ =
   (* ARRANGE *)
   let input : Ast.expr = Lam ("a", FunType ("x", Var "a", Var "x")) in
-  let expected = Lam (FunType (Var 0, Var 0)) in
+  let expected = Lam (FunType (Mono (Var 0), Var 0)) in
   (* ACT *)
   let output = toDeBruijn input in
   (* ASSERT *)
@@ -186,7 +186,8 @@ let nestedLambdaTypeAbstraction _ =
               ) ) )
   in
   let expected =
-    Lam (Lam (Lam (FunType (Var 1, Fun (FunType (Var 2, Int 1))))))
+    Lam
+      (Lam (Lam (FunType (Mono (Var 1), Fun (FunType (Mono (Var 2), Int 1))))))
   in
   (* ACT *)
   let output = toDeBruijn input in
@@ -203,9 +204,7 @@ let lambdaTypeWithForAll _ =
             ForAll ("a", ForAll ("b", ForAll ("c", Fun (Var "a", Var "b")))),
             Var "x" ) )
   in
-  let expected =
-    Lam (FunType (ForAll (ForAll (ForAll (Fun (Var 2, Var 1)))), Var 0))
-  in
+  let expected = Lam (FunType (Poly (3, T (Fun (Var 2, Var 1))), Var 0)) in
   (* ACT *)
   let output = toDeBruijn input in
   (* ASSERT *)
@@ -233,7 +232,10 @@ let nestedLambda _ =
   let expected =
     Lam
       (Lam
-         (Lam (FunType (Var 2, Lam (Lam (Lam (Lam (FunType (Var 3, Var 1)))))))))
+         (Lam
+            (FunType
+               ( Mono (Var 2),
+                 Lam (Lam (Lam (Lam (FunType (Mono (Var 3), Var 1))))) ))))
   in
   (* ACT *)
   let output = toDeBruijn input in

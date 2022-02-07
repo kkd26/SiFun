@@ -44,11 +44,18 @@ and unifyRho (r1 : rhoType) (r2 : rhoType) : substitution IntState.t =
   | _, _ -> raise (UnifyException "Cannot unify")
 
 and unifyPoly (p1 : polyType) (p2 : polyType) : substitution IntState.t =
-  (* | ForAll t1, ForAll t2 ->
-        freshName >>= fun x -> unifyOne (DBType.substMonoType (FreshVar x) 0 t1) t2 *)
+  let open IntState in
   let a1, r1 = p1 in
   let a2, r2 = p2 in
-  if a1 = a2 then unify [ (Rho r1, Rho r2) ]
+  if a1 = a2 then
+    match a1 with
+    | 0 -> unify [ (Rho r1, Rho r2) ]
+    | n ->
+        freshName >>= fun x ->
+        unify
+          [
+            (Poly (n - 1, DBType.substRho (FreshVar x) 0 r1), Poly (n - 1, r2));
+          ]
   else raise (UnifyException "Different size")
 
 and unifyOne (t1 : typeKind) (t2 : typeKind) : substitution IntState.t =
