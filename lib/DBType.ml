@@ -19,15 +19,27 @@ let typeKindToMono = function
   | Mono m -> m
   | Rho (T m) -> m
   | Poly (0, T m) -> m
-  | _ -> failwith "Convertion not possible"
+  | _ -> failwith "Convertion tk to mono not possible"
 
 let typeKindToRho = function
   | Mono m -> T m
   | Rho r -> r
   | Poly (0, r) -> r
-  | _ -> failwith "Convertion not possible"
+  | _ -> failwith "Convertion tk to rho not possible"
 
 let typeKindToPoly = function Poly p -> p | t -> (0, typeKindToRho t)
+
+let rec normalize = function
+  | Mono m -> Mono m
+  | Rho (T m) -> Mono m
+  | Rho (F (p1, p2)) -> (
+      let tk1 = normalize (Poly p1) in
+      let tk2 = normalize (Poly p2) in
+      match (tk1, tk2) with
+      | Mono m1, Mono m2 -> normalize (Mono (Fun (m1, m2)))
+      | _ -> Rho (F (typeKindToPoly tk1, typeKindToPoly tk2)))
+  | Poly (0, r) -> normalize (Rho r)
+  | Poly (a, r) -> Poly (a, typeKindToRho (normalize (Rho r)))
 
 (** Updates current environment `env` and returns a new one *)
 let update env newVal queryVal =

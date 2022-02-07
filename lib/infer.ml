@@ -4,23 +4,27 @@ open Unify
 open State
 open TypeCtx
 
+let returnNormalized (sub, typ) =
+  let open IntState in
+  return (sub, normalize typ)
+
 let rec inferType' check (ctx : typeCtx) (e : Debruijn.expr) :
     (substitution * typeKind) IntState.t =
   let _ = check e in
   let open IntState in
   match e with
-  | Int _ -> return (emptySubst, Mono Int)
-  | Bool _ -> return (emptySubst, Mono Bool)
-  | Unit -> return (emptySubst, Mono Unit)
+  | Int _ -> returnNormalized (emptySubst, Mono Int)
+  | Bool _ -> returnNormalized (emptySubst, Mono Bool)
+  | Unit -> returnNormalized (emptySubst, Mono Unit)
   | Var x ->
       let polyType : typeKind = find x ctx in
-      return (emptySubst, polyType)
+      returnNormalized (emptySubst, polyType)
   | Fun f ->
       freshName >>= fun x ->
       let newCtx = updateCtx ctx (Mono (FreshVar x)) in
       inferType' check newCtx f >>= fun (s, t) ->
-      let m = applySubstToTypeKind s (Mono (FreshVar x)) in
-      return (s, Mono (Fun (typeKindToMono m, typeKindToMono t)))
+      let tk = applySubstToTypeKind s (Mono (FreshVar x)) in
+      returnNormalized (s, Rho (F (typeKindToPoly tk, typeKindToPoly t)))
   | App (f, g) ->
       inferType' check ctx f >>= fun (s1, tf) ->
       let newCtx = applySubstToCtx s1 ctx in
@@ -28,7 +32,7 @@ let rec inferType' check (ctx : typeCtx) (e : Debruijn.expr) :
       freshName >>= fun x ->
       let tx = Mono (Fun (typeKindToMono tg, FreshVar x)) in
       unify [ (tx, applySubstToTypeKind s2 tf) ] >>= fun s3 ->
-      return
+      returnNormalized
         ( combineSubst s3 (combineSubst s2 s1),
           applySubstToTypeKind s3 (Mono (FreshVar x)) )
   | Pair (e1, e2) ->
@@ -38,7 +42,7 @@ let rec inferType' check (ctx : typeCtx) (e : Debruijn.expr) :
       let s3 = combineSubst s2 s1 in
       let m1 = applySubstToTypeKind s3 t1 in
       let m2 = applySubstToTypeKind s3 t2 in
-      return (s3, Mono (Pair (typeKindToMono m1, typeKindToMono m2)))
+      returnNormalized (s3, Mono (Pair (typeKindToMono m1, typeKindToMono m2)))
   | (Fst e | Snd e) as e1 ->
       inferType' check ctx e >>= fun (s1, t1) ->
       freshName >>= fun x ->
@@ -46,7 +50,7 @@ let rec inferType' check (ctx : typeCtx) (e : Debruijn.expr) :
       let tx = Mono (Pair (FreshVar x, FreshVar y)) in
       unify [ (tx, t1) ] >>= fun s2 ->
       let s3 = combineSubst s2 s1 in
-      return
+      returnNormalized
         ( s3,
           applySubstToTypeKind s3
             (match e1 with
@@ -55,21 +59,23 @@ let rec inferType' check (ctx : typeCtx) (e : Debruijn.expr) :
   | TypeApp (e, t) ->
       inferType' check ctx e >>= fun (s1, t1) ->
       freshName >>= fun x ->
-      let tx = Poly (0, T (FreshVar x)) in
+      let tx = Poly (1, T (FreshVar x)) in
       unify [ (tx, t1) ] >>= fun s2 ->
       let s3 = combineSubst s2 s1 in
       let tw =
         DBType.substType (typeKindToMono t) 0
           (applySubstToTypeKind s3 (Mono (FreshVar x)))
       in
-      return (s3, tw)
+      returnNormalized (s3, tw)
   | FunType (t, f) ->
       let newCtx = updateCtx ctx t in
       inferType' check newCtx f >>= fun (s1, t1) ->
       let m1 = applySubstToTypeKind s1 t in
-      return (s1, Mono (Fun (typeKindToMono m1, typeKindToMono t1)))
+      returnNormalized (s1, Rho (F (typeKindToPoly m1, typeKindToPoly t1)))
   | Lam e ->
-      inferType' check (shift 1 0 ctx) e >>= fun (s1, t1) -> return (s1, t1)
+      inferType' check (shift 1 0 ctx) e >>= fun (s1, t1) ->
+      let a, r = typeKindToPoly t1 in
+      returnNormalized (s1, Poly (a + 1, r))
 
 let inferType (e : Debruijn.expr) : substitution * typeKind =
   let check (e : Debruijn.expr) =
