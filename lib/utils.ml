@@ -35,7 +35,11 @@ let printDBAst dBExprList =
   Printf.printf "DeBruijn:\n%s\n" dBAstString
 
 let printTypeExpr typeExpr =
-  let typeExprString = DBType.typeExprToString typeExpr in
+  let typeExprString = DBType.monoTypeToString typeExpr in
   Printf.printf "Type:\n%s\n" typeExprString
+
+let printTypeKind typeKind =
+  let typeKindString = DBType.typeKindToString typeKind in
+  Printf.printf "TypeKind:\n%s\n" typeKindString
 
 let printSubst subst = Printf.printf "%s\n" (Subst.substToString subst)

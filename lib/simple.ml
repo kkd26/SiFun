@@ -44,8 +44,8 @@ let rec shiftType i c = function
   | Snd e -> Fst (shiftType i c e)
   | Fun e -> Fun (shiftType i c e)
   | App (e1, e2) -> App (shiftType i c e1, shiftType i c e2)
-  | FunType (t, e) -> FunType (DBType.shift i c t, shiftType i c e)
-  | TypeApp (e, t) -> TypeApp (shiftType i c e, DBType.shift i c t)
+  | FunType (p, e) -> FunType (DBType.shiftType i c p, shiftType i c e)
+  | TypeApp (e, m) -> TypeApp (shiftType i c e, DBType.shiftType i c m)
   | Lam e -> Lam (shiftType i (c + 1) e)
   | e -> e
 
@@ -55,9 +55,9 @@ let rec substType t n = function
   | Snd e1 -> Fst (substType t n e1)
   | Fun e1 -> Fun (substType t n e1)
   | App (e1, e2) -> App (substType t n e1, substType t n e2)
-  | FunType (t1, e1) -> FunType (DBType.subst t n t1, substType t n e1)
-  | TypeApp (e1, t1) -> TypeApp (substType t n e1, DBType.subst t n t1)
-  | Lam e1 -> Lam (substType (DBType.shift 1 0 t) (n + 1) e1)
+  | FunType (p, e1) -> FunType (DBType.substType t n p, substType t n e1)
+  | TypeApp (e1, m) -> TypeApp (substType t n e1, DBType.substType t n m)
+  | Lam e1 -> Lam (substType (DBType.shiftMono 1 0 t) (n + 1) e1)
   | e -> e
 
 let rec reduce = function
@@ -84,7 +84,7 @@ let rec reduce = function
   | FunType _ -> None
   | TypeApp (e1, t) -> (
       match e1 with
-      | Lam e -> Some (shiftType (-1) 0 (substType t 0 e))
+      | Lam e -> Some (shiftType (-1) 0 (substType Int 0 e))
       | _ -> (
           match reduce e1 with Some e -> Some (TypeApp (e, t)) | None -> None))
   | Lam _ -> None

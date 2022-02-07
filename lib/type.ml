@@ -18,14 +18,12 @@ let numToString n =
   ^ if i <> 0 then string_of_int i else ""
 
 let rec typeExprToString = function
-  | Var s -> s
-  | Int -> "int"
-  | Bool -> "bool"
-  | Unit -> "unit"
+  | Var s -> "Var(" ^ s ^ ")"
+  | Int -> "Int"
+  | Bool -> "Bool"
+  | Unit -> "Unit"
   | Pair (t1, t2) ->
-      "(" ^ typeExprToString t1 ^ ", " ^ typeExprToString t2 ^ ")"
+      "Pair(" ^ typeExprToString t1 ^ "," ^ typeExprToString t2 ^ ")"
   | Fun (t1, t2) ->
-      let inner = typeExprToString t1 in
-      (match t1 with Fun (_, _) -> "(" ^ inner ^ ")" | _ -> inner)
-      ^ " -> " ^ typeExprToString t2
-  | ForAll (s, t) -> "∀" ^ s ^ ".(" ^ typeExprToString t ^ ")"
+      "Fun(" ^ typeExprToString t1 ^ "," ^ typeExprToString t2 ^ ")"
+  | ForAll (s, t) -> "ForAll(" ^ s ^ "," ^ typeExprToString t ^ ")"

@@ -21,7 +21,7 @@ let repl () =
        let reduced = Simple.reduceAll debruijn in
        (* print the result *)
        printf "%s : %s"
-         (DBType.typeExprToString typ)
+         (DBType.typeKindToString typ)
          (Debruijn.exprToString reduced)
      with
     | Utils.LexBufError msg -> printf "\r %s" msg

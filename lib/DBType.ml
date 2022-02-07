@@ -8,60 +8,167 @@ type monoType =
   | Unit
   | Pair of monoType * monoType
   | Fun of monoType * monoType
-  | ForAll of monoType
 
-let update env x y = if y = x then 0 else 1 + env y
+and polyType = int * rhoType
+and rhoType = T of monoType | F of polyType * polyType
 
-let rec toDeBruijn typeCtx : Type.monoType -> monoType = function
+(** Kind of a type - monoType, rhoType, polyType *)
+type typeKind = Mono of monoType | Rho of rhoType | Poly of polyType
+
+let typeKindToMono = function
+  | Mono m -> m
+  | Rho (T m) -> m
+  | Poly (0, T m) -> m
+  | _ -> failwith "Convertion not possible"
+
+let typeKindToRho = function
+  | Mono m -> T m
+  | Rho r -> r
+  | Poly (0, r) -> r
+  | _ -> failwith "Convertion not possible"
+
+let typeKindToPoly = function Poly p -> p | t -> (0, typeKindToRho t)
+
+(** Updates current environment `env` and returns a new one *)
+let update env newVal queryVal =
+  if queryVal = newVal then 0 else 1 + env queryVal
+
+(** Checks if a type is a monoType - i.e. doesn't have any ForAll *)
+let isMonoType =
+  let rec isMonoType' acc : Type.monoType -> bool = function
+    | ForAll _ -> false
+    | Pair (t1, t2) -> isMonoType' (isMonoType' acc t1) t2
+    | Fun (t1, t2) -> isMonoType' (isMonoType' acc t1) t2
+    | _ -> acc
+  in
+  isMonoType' true
+
+let rec monoTypeToDeBruijn' typeCtx (typeExpr : Type.monoType) : monoType =
+  match typeExpr with
   | Int -> Int
   | Var v -> Var (typeCtx v)
   | Bool -> Bool
   | Unit -> Unit
-  | Pair (t1, t2) -> Pair (toDeBruijn typeCtx t1, toDeBruijn typeCtx t2)
-  | Fun (t1, t2) -> Fun (toDeBruijn typeCtx t1, toDeBruijn typeCtx t2)
+  | Pair (t1, t2) ->
+      Pair (monoTypeToDeBruijn' typeCtx t1, monoTypeToDeBruijn' typeCtx t2)
+  | Fun (t1, t2) ->
+      Fun (monoTypeToDeBruijn' typeCtx t1, monoTypeToDeBruijn' typeCtx t2)
+  | _ -> failwith "Not a monoType"
+
+let rec rhoTypeToDeBruijn' typeCtx (typeExpr : Type.monoType) : rhoType =
+  if isMonoType typeExpr then T (monoTypeToDeBruijn' typeCtx typeExpr)
+  else
+    match typeExpr with
+    | Fun (t1, t2) ->
+        F (polyTypeToDeBruijn' typeCtx t1, polyTypeToDeBruijn' typeCtx t2)
+    | _ -> failwith "Not a rhoType"
+
+(** Converts a polyType into the deBruijn notation *)
+and polyTypeToDeBruijn' typeCtx : Type.monoType -> polyType = function
   | ForAll (v, t) ->
-      let newEnv = update typeCtx v in
-      ForAll (toDeBruijn newEnv t)
+      let newCtx = update typeCtx v in
+      let a, r =
+        match t with
+        | ForAll _ -> polyTypeToDeBruijn' newCtx t
+        | _ -> (0, rhoTypeToDeBruijn' newCtx t)
+      in
+      (a + 1, r)
+  | t ->
+      let r = rhoTypeToDeBruijn' typeCtx t in
+      (0, r)
 
-let rec shift i c = function
-  | (Int | Bool | Unit | FreshVar _) as t -> t
-  | Var n -> if n >= c then Var (n + i) else Var n
-  | Pair (t1, t2) -> Pair (shift i c t1, shift i c t2)
-  | Fun (t1, t2) -> Fun (shift i c t1, shift i c t2)
-  | ForAll t -> ForAll (shift i (c + 1) t)
+(** Converts a monoType into the deBruijn notation *)
+let monoTypeToDeBruijn typeCtx (typeExpr : Type.monoType) : typeKind =
+  Mono (monoTypeToDeBruijn' typeCtx typeExpr)
 
-let rec subst t n = function
-  | (Int | Bool | Unit | FreshVar _) as t -> t
-  | Var m -> if n = m then t else Var m
-  | Pair (t1, t2) -> Pair (subst t n t1, subst t n t2)
-  | Fun (t1, t2) -> Fun (subst t n t1, subst t n t2)
-  | ForAll t1 -> ForAll (subst (shift 1 0 t) (n + 1) t1)
+(** Converts a rhoType into the deBruijn notation *)
+let rhoTypeToDeBruijn typeCtx (typeExpr : Type.monoType) : typeKind =
+  Rho (rhoTypeToDeBruijn' typeCtx typeExpr)
 
-let verifyType =
-  let rec verifyType' typeCtx = function
-    | Var v -> v < typeCtx
-    | FreshVar _ | Int | Bool | Unit -> true
-    | Pair (e1, e2) -> verifyType' typeCtx e1 && verifyType' typeCtx e2
-    | Fun (e1, e2) -> verifyType' typeCtx e1 && verifyType' typeCtx e2
-    | ForAll t -> verifyType' (typeCtx + 1) t
-  in
-  verifyType' 0
+(** Converts a polyType into the deBruijn notation *)
+let polyTypeToDeBruijn typeCtx (typeExpr : Type.monoType) : typeKind =
+  Poly (polyTypeToDeBruijn' typeCtx typeExpr)
+
+(** Converts a type expression into the deBruijn notation *)
+let typeToDeBruijn typeCtx typeExpr : typeKind =
+  if isMonoType typeExpr then monoTypeToDeBruijn typeCtx typeExpr
+  else
+    match typeExpr with
+    | ForAll _ -> polyTypeToDeBruijn typeCtx typeExpr
+    | _ -> rhoTypeToDeBruijn typeCtx typeExpr
+
+(** Shifts monoType variables by `i` *)
+let rec shiftMono (i : typeVar) (n : typeVar) = function
+  | (Int | Bool | Unit | FreshVar _) as m -> m
+  | Var n' -> if n' >= n then Var (n' + i) else Var n'
+  | Pair (m1, m2) -> Pair (shiftMono i n m1, shiftMono i n m2)
+  | Fun (m1, m2) -> Fun (shiftMono i n m1, shiftMono i n m2)
+
+(** Shifts rhoType variables by `i` *)
+let rec shiftRho (i : typeVar) (n : typeVar) = function
+  | T m -> T (shiftMono i n m)
+  | F (p1, p2) -> F (shiftPoly i n p1, shiftPoly i n p2)
+
+(** Shifts polyType variables by `i` *)
+and shiftPoly (i : typeVar) (n : typeVar) = function
+  | a, r -> (a, shiftRho i (n + a) r)
+
+let shiftType (i : typeVar) (n : typeVar) = function
+  | Mono m -> Mono (shiftMono i n m)
+  | Rho r -> Rho (shiftRho i n r)
+  | Poly p -> Poly (shiftPoly i n p)
+
+(** Substitutes `monoType` under `Var n` inside a monoType expression *)
+let rec substMono (monoType : monoType) (n : typeVar) (m : monoType) =
+  match m with
+  | (Int | Bool | Unit | FreshVar _) as monoType -> monoType
+  | Var n' -> if n = n' then monoType else Var n'
+  | Pair (m1, m2) -> Pair (substMono monoType n m1, substMono monoType n m2)
+  | Fun (m1, m2) -> Fun (substMono monoType n m1, substMono monoType n m2)
+
+(** Substitutes `monoType` under `Var n` inside a rhoType expression *)
+let rec substRho (monoType : monoType) (n : typeVar) (r : rhoType) =
+  match r with
+  | T m1 -> T (substMono monoType n m1)
+  | F (p1, p2) -> F (substPoly monoType n p1, substPoly monoType n p2)
+
+(** Substitutes `monoType` under `Var n` inside a polyType expression *)
+and substPoly (monoType : monoType) (n : typeVar) (p : polyType) =
+  let a, r = p in
+  (a, substRho (shiftMono a 0 monoType) (n + a) r)
+
+(** Substitutes `monoType` under `Var n` inside a type expression *)
+let substType (monoType : monoType) (n : typeVar) = function
+  | Mono m -> Mono (substMono monoType n m)
+  | Rho r -> Rho (substRho monoType n r)
+  | Poly p -> Poly (substPoly monoType n p)
 
 let incChar c = String.make 1 (Char.chr (c + Char.code 'a'))
 
-let rec typeExprToString' var = function
-  | Var s -> incChar (var - s - 1)
+let rec monoTypeToString' var = function
+  | Var s -> string_of_int s
   | FreshVar s -> "f" ^ string_of_int s
   | Int -> "int"
   | Bool -> "bool"
   | Unit -> "unit"
   | Pair (t1, t2) ->
-      "(" ^ typeExprToString' var t1 ^ ", " ^ typeExprToString' var t2 ^ ")"
+      "(" ^ monoTypeToString' var t1 ^ ", " ^ monoTypeToString' var t2 ^ ")"
   | Fun (t1, t2) ->
-      let inner = typeExprToString' var t1 in
+      let inner = monoTypeToString' var t1 in
       (match t1 with Fun (_, _) -> "(" ^ inner ^ ")" | _ -> inner)
-      ^ " -> " ^ typeExprToString' var t2
-  | ForAll t ->
-      "forall " ^ incChar var ^ ".(" ^ typeExprToString' (var + 1) t ^ ")"
+      ^ " -> " ^ monoTypeToString' var t2
 
-let typeExprToString = typeExprToString' 0
+let rec rhoToString' var = function
+  | T t -> "R[" ^ monoTypeToString' var t ^ "]"
+  | F (s1, s2) ->
+      "R[" ^ polyToString' var s1 ^ "->" ^ polyToString' var s2 ^ "]"
+
+and polyToString' var (a, r) =
+  "(" ^ string_of_int a ^ "," ^ rhoToString' var r ^ ")"
+
+let monoTypeToString = monoTypeToString' 1
+
+let typeKindToString = function
+  | Mono m -> monoTypeToString m
+  | Rho r -> rhoToString' 0 r
+  | Poly p -> polyToString' 0 p

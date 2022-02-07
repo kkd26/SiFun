@@ -11,8 +11,8 @@ type expr =
   | Fun of expr
   | App of expr * expr
   (* Extended Language *)
-  | FunType of DBType.monoType * expr
-  | TypeApp of expr * DBType.monoType
+  | FunType of DBType.typeKind * expr
+  | TypeApp of expr * DBType.typeKind
   | Lam of expr
 
 let emptyEnvErrorMessage msg var = Printf.sprintf "%s: Unbound value %s" msg var
@@ -20,7 +20,8 @@ let emptyEnv s var = failwith (emptyEnvErrorMessage s var)
 let update env x y = if y = x then 0 else 1 + env y
 
 let toDeBruijn =
-  let rec toDeBruijn' ctx typeCtx : Ast.expr -> expr = function
+  let rec toDeBruijn' (ctx : Ast.var -> var) typeCtx : Ast.expr -> expr =
+    function
     | Int i -> Int i
     | Var v -> Var (ctx v)
     | Bool b -> Bool b
@@ -36,9 +37,11 @@ let toDeBruijn =
         App (toDeBruijn' ctx typeCtx e1, toDeBruijn' ctx typeCtx e2)
     | FunType (v, t, e) ->
         let newCtx = update ctx v in
-        FunType (DBType.toDeBruijn typeCtx t, toDeBruijn' newCtx typeCtx e)
+        let tk = DBType.typeToDeBruijn typeCtx t in
+        FunType (tk, toDeBruijn' newCtx typeCtx e)
     | TypeApp (e, t) ->
-        TypeApp (toDeBruijn' ctx typeCtx e, DBType.toDeBruijn typeCtx t)
+        let tk = DBType.typeToDeBruijn typeCtx t in
+        TypeApp (toDeBruijn' ctx typeCtx e, tk)
     | Lam (v, e) ->
         let newTypeCtx = update typeCtx v in
         Lam (toDeBruijn' ctx newTypeCtx e)
@@ -62,9 +65,7 @@ let exprToString =
     | Fun e ->
         "fn " ^ DBType.incChar var ^ " => " ^ exprToString' typeVar (var + 1) e
     | FunType (t, e) ->
-        "fn " ^ DBType.incChar var ^ " : "
-        ^ DBType.typeExprToString' typeVar t
-        ^ " => "
+        "fn " ^ DBType.incChar var ^ " : " ^ DBType.typeKindToString t ^ " => "
         ^ exprToString' typeVar (var + 1) e
     | App (e1, e2) ->
         "("
@@ -75,14 +76,12 @@ let exprToString =
     | TypeApp (e, t) ->
         "("
         ^ exprToString' typeVar var e
-        ^ ") {"
-        ^ DBType.typeExprToString' typeVar t
-        ^ "}"
+        ^ ") {" ^ DBType.typeKindToString t ^ "}"
     | Lam e ->
         "lam " ^ DBType.incChar typeVar ^ "."
         ^ exprToString' (typeVar + 1) var e
   in
-  exprToString' 0 16
+  exprToString' 1 16
 
 let rec exprListToString = function
   | [] -> ""

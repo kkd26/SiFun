@@ -8,40 +8,67 @@ let rec inType n t =
       if n = m then raise (UnifyException "Circular dependencies ") else true
   | Pair (t1, t2) -> inType n t1 && inType n t2
   | Fun (t1, t2) -> inType n t1 && inType n t2
-  | ForAll t1 -> inType n t1
+  (* | ForAll t1 -> inType n t1 *)
   | _ -> true
 
-let rec unifyOne (t1 : monoType) (t2 : monoType) : substitution IntState.t =
+let rec unifyMono (m1 : monoType) (m2 : monoType) : substitution IntState.t =
   let open IntState in
-  match (t1, t2) with
+  match (m1, m2) with
   | Int, Int | Bool, Bool | Unit, Unit -> return emptySubst
   | Var n, Var m ->
       if n = m then return emptySubst else raise (UnifyException "")
   | FreshVar n, FreshVar m ->
-      if n = m then return emptySubst else return [ (n, t2) ]
-  | Fun (t3, t4), Fun (t5, t6) -> unify [ (t5, t3); (t4, t6) ]
-  | Pair (t3, t4), Pair (t5, t6) -> unify [ (t3, t5); (t4, t6) ]
-  | ForAll t1, ForAll t2 ->
-      freshName >>= fun x -> unifyOne (DBType.subst (FreshVar x) 0 t1) t2
+      if n = m then return emptySubst else return [ (n, Mono m2) ]
+  | Fun (m3, m4), Fun (m5, m6) ->
+      unify [ (Mono m3, Mono m5); (Mono m4, Mono m6) ]
+  | Pair (m3, m4), Pair (m5, m6) ->
+      unify [ (Mono m3, Mono m5); (Mono m4, Mono m6) ]
   | FreshVar n, t | t, FreshVar n -> (
       try
         let _ = inType n t in
-        return [ (n, t) ]
+        return [ (n, Mono t) ]
       with UnifyException e ->
         raise
           (UnifyException
-             (e ^ typeExprToString t1 ^ " and " ^ typeExprToString t2)))
+             (e ^ monoTypeToString m1 ^ " and " ^ monoTypeToString m2)))
   | _, _ ->
       raise
         (UnifyException
-           ("Cannot unify " ^ typeExprToString t1 ^ " and "
-          ^ typeExprToString t2))
+           ("Cannot unify " ^ monoTypeToString m1 ^ " and "
+          ^ monoTypeToString m2))
 
-and unify s : substitution IntState.t =
+and unifyRho (r1 : rhoType) (r2 : rhoType) : substitution IntState.t =
+  match (r1, r2) with
+  | T m1, T m2 -> unifyMono m1 m2
+  | F (p1, p2), F (p3, p4) -> unify [ (Poly p3, Poly p1); (Poly p2, Poly p4) ]
+  | _, _ -> raise (UnifyException "Cannot unify")
+
+and unifyPoly (p1 : polyType) (p2 : polyType) : substitution IntState.t =
+  (* | ForAll t1, ForAll t2 ->
+        freshName >>= fun x -> unifyOne (DBType.substMonoType (FreshVar x) 0 t1) t2 *)
+  let a1, r1 = p1 in
+  let a2, r2 = p2 in
+  if a1 = a2 then unify [ (Rho r1, Rho r2) ]
+  else raise (UnifyException "Different size")
+
+and unifyOne (t1 : typeKind) (t2 : typeKind) : substitution IntState.t =
+  let t2 =
+    match t1 with
+    | Mono _ -> Mono (typeKindToMono t2)
+    | Rho _ -> Rho (typeKindToRho t2)
+    | Poly _ -> Poly (typeKindToPoly t2)
+  in
+  match (t1, t2) with
+  | Mono m1, Mono m2 -> unifyMono m1 m2
+  | Rho r1, Rho r2 -> unifyRho r1 r2
+  | Poly p1, Poly p2 -> unifyPoly p1 p2
+  | _, _ -> failwith ""
+
+and unify (s : (typeKind * typeKind) list) : substitution IntState.t =
   let open IntState in
   match s with
   | [] -> return emptySubst
   | (x, y) :: t ->
       unify t >>= fun s2 ->
-      unifyOne (applySubstToMonoType s2 x) (applySubstToMonoType s2 y)
+      unifyOne (applySubstToTypeKind s2 x) (applySubstToTypeKind s2 y)
       >>= fun s1 -> return (s1 @ s2)

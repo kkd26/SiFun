@@ -31,8 +31,8 @@ let rec exprToString = function
       "Fun(" ^ v ^ "," ^ Type.typeExprToString t ^ "," ^ exprToString e ^ ")"
   | App (e1, e2) -> "App(" ^ exprToString e1 ^ "," ^ exprToString e2 ^ ")"
   | TypeApp (e, t) ->
-      "TypeApp(" ^ exprToString e ^ ", " ^ Type.typeExprToString t ^ ")"
-  | Lam (v, e) -> "L " ^ v ^ "." ^ exprToString e
+      "TypeApp(" ^ exprToString e ^ "," ^ Type.typeExprToString t ^ ")"
+  | Lam (v, e) -> "Lam(" ^ v ^ "," ^ exprToString e ^ ")"
 
 let rec exprListToString = function
   | [] -> ""

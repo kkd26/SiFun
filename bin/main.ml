@@ -15,9 +15,9 @@ let fromFile filename () =
     printDBAst reduced;
     let infer = List.map Infer.inferTypeHMV dBAst in
     List.iter
-      (fun (_, typ) ->
-        (* Utils.printSubst subs; *)
-        Utils.printTypeExpr typ;
+      (fun (subs, typ) ->
+        Utils.printSubst subs;
+        Utils.printTypeKind typ;
         Printf.printf "\n")
       infer;
     Core.In_channel.close inx
