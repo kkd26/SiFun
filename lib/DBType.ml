@@ -15,17 +15,52 @@ and rhoType = T of monoType | F of polyType * polyType
 (** Kind of a type - monoType, rhoType, polyType *)
 type typeKind = Mono of monoType | Rho of rhoType | Poly of polyType
 
+exception DBTypeException of string
+
+let rec monoTypeToString' var = function
+  | Var s -> string_of_int s
+  | FreshVar s -> "f" ^ string_of_int s
+  | Int -> "int"
+  | Bool -> "bool"
+  | Unit -> "unit"
+  | Pair (t1, t2) ->
+      "(" ^ monoTypeToString' var t1 ^ ", " ^ monoTypeToString' var t2 ^ ")"
+  | Fun (t1, t2) ->
+      let inner = monoTypeToString' var t1 in
+      (match t1 with Fun (_, _) -> "(" ^ inner ^ ")" | _ -> inner)
+      ^ " -> " ^ monoTypeToString' var t2
+
+let rec rhoToString' var = function
+  | T t -> "R[" ^ monoTypeToString' var t ^ "]"
+  | F (s1, s2) ->
+      "R[" ^ polyToString' var s1 ^ "->" ^ polyToString' var s2 ^ "]"
+
+and polyToString' var (a, r) =
+  "(" ^ string_of_int a ^ "," ^ rhoToString' var r ^ ")"
+
+let monoTypeToString = monoTypeToString' 1
+let rhoToString = rhoToString' 1
+let polyToString = polyToString' 1
+
+let typeKindToString = function
+  | Mono m -> monoTypeToString m
+  | Rho r -> rhoToString r
+  | Poly p -> polyToString p
+
 let typeKindToMono = function
   | Mono m -> m
   | Rho (T m) -> m
   | Poly (0, T m) -> m
-  | _ -> failwith "Convertion tk to mono not possible"
+  | tk ->
+      raise
+        (DBTypeException
+           ("Conversion tk to mono not possible " ^ typeKindToString tk))
 
 let typeKindToRho = function
   | Mono m -> T m
   | Rho r -> r
   | Poly (0, r) -> r
-  | _ -> failwith "Convertion tk to rho not possible"
+  | _ -> raise (DBTypeException "Conversion tk to rho not possible")
 
 let typeKindToPoly = function Poly p -> p | t -> (0, typeKindToRho t)
 
@@ -65,7 +100,7 @@ let rec monoTypeToDeBruijn' typeCtx (typeExpr : Type.monoType) : monoType =
       Pair (monoTypeToDeBruijn' typeCtx t1, monoTypeToDeBruijn' typeCtx t2)
   | Fun (t1, t2) ->
       Fun (monoTypeToDeBruijn' typeCtx t1, monoTypeToDeBruijn' typeCtx t2)
-  | _ -> failwith "Not a monoType"
+  | _ -> raise (DBTypeException "Not a monoType")
 
 let rec rhoTypeToDeBruijn' typeCtx (typeExpr : Type.monoType) : rhoType =
   if isMonoType typeExpr then T (monoTypeToDeBruijn' typeCtx typeExpr)
@@ -73,7 +108,7 @@ let rec rhoTypeToDeBruijn' typeCtx (typeExpr : Type.monoType) : rhoType =
     match typeExpr with
     | Fun (t1, t2) ->
         F (polyTypeToDeBruijn' typeCtx t1, polyTypeToDeBruijn' typeCtx t2)
-    | _ -> failwith "Not a rhoType"
+    | _ -> raise (DBTypeException "Not a rhoType")
 
 (** Converts a polyType into the deBruijn notation *)
 and polyTypeToDeBruijn' typeCtx : Type.monoType -> polyType = function
@@ -156,31 +191,3 @@ let substType (monoType : monoType) (n : typeVar) = function
   | Poly p -> Poly (substPoly monoType n p)
 
 let incChar c = String.make 1 (Char.chr (c + Char.code 'a'))
-
-let rec monoTypeToString' var = function
-  | Var s -> string_of_int s
-  | FreshVar s -> "f" ^ string_of_int s
-  | Int -> "int"
-  | Bool -> "bool"
-  | Unit -> "unit"
-  | Pair (t1, t2) ->
-      "(" ^ monoTypeToString' var t1 ^ ", " ^ monoTypeToString' var t2 ^ ")"
-  | Fun (t1, t2) ->
-      let inner = monoTypeToString' var t1 in
-      (match t1 with Fun (_, _) -> "(" ^ inner ^ ")" | _ -> inner)
-      ^ " -> " ^ monoTypeToString' var t2
-
-let rec rhoToString' var = function
-  | T t -> "R[" ^ monoTypeToString' var t ^ "]"
-  | F (s1, s2) ->
-      "R[" ^ polyToString' var s1 ^ "->" ^ polyToString' var s2 ^ "]"
-
-and polyToString' var (a, r) =
-  "(" ^ string_of_int a ^ "," ^ rhoToString' var r ^ ")"
-
-let monoTypeToString = monoTypeToString' 1
-
-let typeKindToString = function
-  | Mono m -> monoTypeToString m
-  | Rho r -> rhoToString' 0 r
-  | Poly p -> polyToString' 0 p

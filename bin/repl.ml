@@ -23,9 +23,7 @@ let repl () =
        printf "%s : %s"
          (DBType.typeKindToString typ)
          (Debruijn.exprToString reduced)
-     with
-    | Utils.LexBufError msg -> printf "\r %s" msg
-    | Failure _ -> ());
+     with e -> Exception.handleExceptions e);
     flush stdout
   done
 

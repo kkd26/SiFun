@@ -43,9 +43,6 @@ let substFromList list : substitution =
   let range = List.init n (fun x -> x) in
   List.combine range list
 
-exception TypeException
-exception UnifyException of string
-
 let substToString =
   let elemToString a (x, t) =
     a ^ string_of_int x ^ ":(" ^ typeKindToString t ^ ") "

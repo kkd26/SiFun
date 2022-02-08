@@ -134,7 +134,7 @@ let inferApplication _ =
 let inferExprInParenthesis _ =
   (* ARRANGE *)
   let input : Debruijn.expr = App (Int 1, Int 2) in
-  let expected = Failure "Cannot unify int -> f0 and int" in
+  let expected = Unify.UnifyException "Cannot unify int -> f0 and int" in
   (* ACT *)
   let output _ = snd (inferType input) in
   (* ASSERT *)
@@ -157,7 +157,9 @@ let firstAndApplication _ =
 let firstAndTypeApplication _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Fun (TypeApp (Fst (Var 0), Mono Int)) in
-  let expected = Failure "Different size" in
+  let expected =
+    Unify.UnifyException "Different size (1,R[f3]) and (0,R[f1])"
+  in
   (* ACT *)
   let output _ = snd (inferTypeHMV input) in
   (* ASSERT *)
@@ -168,7 +170,9 @@ let firstAndTypeApplication2 _ =
   let input : Debruijn.expr =
     Fun (TypeApp (TypeApp (Fst (Var 0), Mono Int), Mono Bool))
   in
-  let expected = Failure "Different size" in
+  let expected =
+    Unify.UnifyException "Different size (1,R[f3]) and (0,R[f1])"
+  in
   (* ACT *)
   let output _ = snd (inferTypeHMV input) in
   (* ASSERT *)
@@ -236,7 +240,7 @@ let nestedLambda _ =
   assert_equal expected output
 
 let suite =
-  "DeBruijnTransformTest"
+  "TypeInferenceTest"
   >::: [
          "inferFunction" >:: inferFunction;
          "inferInt1" >:: inferInt1;

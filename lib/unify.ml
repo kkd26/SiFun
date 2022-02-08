@@ -2,14 +2,20 @@ open DBType
 open Subst
 open State
 
-let rec inType n t =
+exception UnifyException of string
+
+let rec inTypeMono n t =
   match t with
   | FreshVar m ->
-      if n = m then raise (UnifyException "Circular dependencies ") else true
-  | Pair (t1, t2) -> inType n t1 && inType n t2
-  | Fun (t1, t2) -> inType n t1 && inType n t2
-  (* | ForAll t1 -> inType n t1 *)
-  | _ -> true
+      if n = m then raise (UnifyException "Circular dependencies in monoType ")
+      else ()
+  | Pair (t1, t2) ->
+      inTypeMono n t1;
+      inTypeMono n t2
+  | Fun (t1, t2) ->
+      inTypeMono n t1;
+      inTypeMono n t2
+  | _ -> ()
 
 let rec unifyMono (m1 : monoType) (m2 : monoType) : substitution IntState.t =
   let open IntState in
@@ -25,7 +31,7 @@ let rec unifyMono (m1 : monoType) (m2 : monoType) : substitution IntState.t =
       unify [ (Mono m3, Mono m5); (Mono m4, Mono m6) ]
   | FreshVar n, t | t, FreshVar n -> (
       try
-        let _ = inType n t in
+        inTypeMono n t;
         return [ (n, Mono t) ]
       with UnifyException e ->
         raise
@@ -41,7 +47,10 @@ and unifyRho (r1 : rhoType) (r2 : rhoType) : substitution IntState.t =
   match (r1, r2) with
   | T m1, T m2 -> unifyMono m1 m2
   | F (p1, p2), F (p3, p4) -> unify [ (Poly p3, Poly p1); (Poly p2, Poly p4) ]
-  | _, _ -> raise (UnifyException "Cannot unify")
+  | _, _ ->
+      raise
+        (UnifyException
+           ("Cannot unify " ^ rhoToString r1 ^ " and " ^ rhoToString r2))
 
 and unifyPoly (p1 : polyType) (p2 : polyType) : substitution IntState.t =
   let open IntState in
@@ -56,7 +65,10 @@ and unifyPoly (p1 : polyType) (p2 : polyType) : substitution IntState.t =
           [
             (Poly (n - 1, DBType.substRho (FreshVar x) 0 r1), Poly (n - 1, r2));
           ]
-  else raise (UnifyException "Different size")
+  else
+    raise
+      (UnifyException
+         ("Different size " ^ polyToString p1 ^ " and " ^ polyToString p2))
 
 and unifyOne (t1 : typeKind) (t2 : typeKind) : substitution IntState.t =
   let t2 =
@@ -69,7 +81,11 @@ and unifyOne (t1 : typeKind) (t2 : typeKind) : substitution IntState.t =
   | Mono m1, Mono m2 -> unifyMono m1 m2
   | Rho r1, Rho r2 -> unifyRho r1 r2
   | Poly p1, Poly p2 -> unifyPoly p1 p2
-  | _, _ -> failwith ""
+  | _, _ ->
+      raise
+        (UnifyException
+           ("Cannot unify " ^ typeKindToString t1 ^ " and "
+          ^ typeKindToString t2))
 
 and unify (s : (typeKind * typeKind) list) : substitution IntState.t =
   let open IntState in

@@ -16,13 +16,13 @@ let fromFile filename () =
     let infer = List.map Infer.inferTypeHMV dBAst in
     List.iter
       (fun (subs, typ) ->
-        Utils.printSubst subs;
-        Utils.printTypeKind typ;
+        printSubst subs;
+        printTypeKind typ;
         Printf.printf "\n")
       infer;
     Core.In_channel.close inx
-  with LexBufError msg ->
-    Printf.eprintf "%s\n" msg;
+  with e ->
+    Exception.handleExceptions e;
     exit (-1)
 
 let () =

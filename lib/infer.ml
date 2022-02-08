@@ -4,6 +4,8 @@ open Unify
 open State
 open TypeCtx
 
+exception InferException of string
+
 let returnNormalized (sub, typ) =
   let open IntState in
   return (sub, normalize typ)
@@ -80,19 +82,17 @@ let rec inferType' check (ctx : typeCtx) (e : Debruijn.expr) :
 let inferType (e : Debruijn.expr) : substitution * typeKind =
   let check (e : Debruijn.expr) =
     match e with
-    | TypeApp _ | FunType _ | Lam _ -> failwith "Not supported"
+    | TypeApp _ | FunType _ | Lam _ ->
+        raise (InferException "Not supported in HM type system")
     | _ -> e
   in
   let open IntState in
-  try snd (runState (inferType' check emptyCtx e) ~init:0)
-  with UnifyException e -> failwith e
+  snd (runState (inferType' check emptyCtx e) ~init:0)
 
 let inferTypeHMV e =
   let check (e : Debruijn.expr) = e in
   let open IntState in
-  try snd (runState (inferType' check emptyCtx e) ~init:0) with
-  | UnifyException e -> failwith e
-  | TypeException -> failwith "incorrect type"
+  snd (runState (inferType' check emptyCtx e) ~init:0)
 
 let inst (s : polyType) =
   let boundVariables, r = s in

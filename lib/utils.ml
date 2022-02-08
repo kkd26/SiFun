@@ -7,17 +7,17 @@ let lexerErrorMessage (line : Lexing.lexbuf) msg =
   let position = line.lex_curr_p in
   Printf.sprintf "%s\n%s" (getPositionString position) msg
 
-exception LexBufError of string
+exception LexBufException of string
 
 (** Transforms Lexing buffer into a list of Abstract Syntax Trees*)
 let lexbufToExprList line =
   try Parser.start Lexer.read line with
   | Lexer.SyntaxError m ->
       let msg = lexerErrorMessage line m in
-      raise (LexBufError msg)
+      raise (LexBufException msg)
   | Parser.Error ->
       let msg = lexerErrorMessage line "Syntax error" in
-      raise (LexBufError msg)
+      raise (LexBufException msg)
 
 (** Parses a string into a list of AST *)
 let stringToExprList input =
