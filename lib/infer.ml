@@ -32,7 +32,10 @@ let rec inferType' check (ctx : typeCtx) (e : Debruijn.expr) :
       let newCtx = applySubstToCtx s1 ctx in
       inferType' check newCtx g >>= fun (s2, tg) ->
       freshName >>= fun x ->
-      let tx = Mono (Fun (typeKindToMono tg, FreshVar x)) in
+      let tx =
+        normalize
+          (Rho (F (typeKindToPoly tg, typeKindToPoly (Mono (FreshVar x)))))
+      in
       unify [ (tx, applySubstToTypeKind s2 tf) ] >>= fun s3 ->
       returnNormalized
         ( combineSubst s3 (combineSubst s2 s1),
@@ -44,12 +47,18 @@ let rec inferType' check (ctx : typeCtx) (e : Debruijn.expr) :
       let s3 = combineSubst s2 s1 in
       let m1 = applySubstToTypeKind s3 t1 in
       let m2 = applySubstToTypeKind s3 t2 in
-      returnNormalized (s3, Mono (Pair (typeKindToMono m1, typeKindToMono m2)))
+      returnNormalized (s3, Rho (P (typeKindToPoly m1, typeKindToPoly m2)))
   | (Fst e | Snd e) as e1 ->
       inferType' check ctx e >>= fun (s1, t1) ->
       freshName >>= fun x ->
       freshName >>= fun y ->
-      let tx = Mono (Pair (FreshVar x, FreshVar y)) in
+      let tx =
+        normalize
+          (Rho
+             (P
+                ( typeKindToPoly (Mono (FreshVar x)),
+                  typeKindToPoly (Mono (FreshVar y)) )))
+      in
       unify [ (tx, t1) ] >>= fun s2 ->
       let s3 = combineSubst s2 s1 in
       returnNormalized
@@ -65,8 +74,7 @@ let rec inferType' check (ctx : typeCtx) (e : Debruijn.expr) :
       unify [ (tx, t1) ] >>= fun s2 ->
       let s3 = combineSubst s2 s1 in
       let tw =
-        DBType.substType (typeKindToMono t) 0
-          (applySubstToTypeKind s3 (Mono (FreshVar x)))
+        DBType.substType t 0 (applySubstToTypeKind s3 (Mono (FreshVar x)))
       in
       returnNormalized (s3, tw)
   | FunType (t, f) ->
@@ -101,7 +109,10 @@ let inst (s : polyType) =
     freshName >>= fun x ->
     match n with
     | 0 -> return r
-    | n -> inst' (DBType.substRho (FreshVar x) (n - 1) r) (n - 1)
+    | n ->
+        inst'
+          (DBType.typeKindToRho (DBType.substRho (Mono (FreshVar x)) (n - 1) r))
+          (n - 1)
   in
   inst' r boundVariables
 

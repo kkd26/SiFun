@@ -17,6 +17,20 @@ let rec inTypeMono n t =
       inTypeMono n t2
   | _ -> ()
 
+and inTypeRho n r =
+  match r with
+  | T m -> inTypeMono n m
+  | F (p1, p2) ->
+      inTypePoly n p1;
+      inTypePoly n p2
+  | P (p1, p2) ->
+      inTypePoly n p1;
+      inTypePoly n p2
+
+and inTypePoly n p =
+  let _, r = p in
+  inTypeRho n r
+
 let rec unifyMono (m1 : monoType) (m2 : monoType) : substitution IntState.t =
   let open IntState in
   match (m1, m2) with
@@ -47,6 +61,7 @@ and unifyRho (r1 : rhoType) (r2 : rhoType) : substitution IntState.t =
   match (r1, r2) with
   | T m1, T m2 -> unifyMono m1 m2
   | F (p1, p2), F (p3, p4) -> unify [ (Poly p3, Poly p1); (Poly p2, Poly p4) ]
+  | P (p1, p2), P (p3, p4) -> unify [ (Poly p1, Poly p3); (Poly p2, Poly p4) ]
   | _, _ ->
       raise
         (UnifyException
@@ -63,7 +78,11 @@ and unifyPoly (p1 : polyType) (p2 : polyType) : substitution IntState.t =
         freshName >>= fun x ->
         unify
           [
-            (Poly (n - 1, DBType.substRho (FreshVar x) 0 r1), Poly (n - 1, r2));
+            ( Poly
+                ( n - 1,
+                  DBType.typeKindToRho
+                    (DBType.substRho (Mono (FreshVar x)) 0 r1) ),
+              Poly (n - 1, r2) );
           ]
   else
     raise

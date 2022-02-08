@@ -6,28 +6,47 @@ type substitution = (typeVar * typeKind) list
 let emptySubst : substitution = []
 
 let rec substituteMono (tk : typeKind) (x : typeVar) (target : monoType) :
-    monoType =
+    typeKind =
   match target with
-  | FreshVar y -> if x = y then typeKindToMono tk else target
-  | Fun (m1, m2) -> Fun (substituteMono tk x m1, substituteMono tk x m2)
-  | Pair (m1, m2) -> Pair (substituteMono tk x m1, substituteMono tk x m2)
-  | t -> t
+  | FreshVar y -> if x = y then tk else Mono target
+  | Fun (m1, m2) ->
+      Rho
+        (F
+           ( typeKindToPoly (substituteMono tk x m1),
+             typeKindToPoly (substituteMono tk x m2) ))
+  | Pair (m1, m2) ->
+      Rho
+        (P
+           ( typeKindToPoly (substituteMono tk x m1),
+             typeKindToPoly (substituteMono tk x m2) ))
+  | t -> Mono t
 
-let rec substituteRho (tk : typeKind) (x : typeVar) (target : rhoType) : rhoType
-    =
+and substituteRho (tk : typeKind) (x : typeVar) (target : rhoType) : typeKind =
   match target with
-  | T m -> T (substituteMono tk x m)
-  | F (p1, p2) -> F (substitutePoly tk x p1, substitutePoly tk x p2)
+  | T m -> substituteMono tk x m
+  | F (p1, p2) ->
+      Rho
+        (F
+           ( typeKindToPoly (substitutePoly tk x p1),
+             typeKindToPoly (substitutePoly tk x p2) ))
+  | P (p1, p2) ->
+      Rho
+        (P
+           ( typeKindToPoly (substitutePoly tk x p1),
+             typeKindToPoly (substitutePoly tk x p2) ))
 
-and substitutePoly (tk : typeKind) (x : typeVar) (target : polyType) : polyType
+and substitutePoly (tk : typeKind) (x : typeVar) (target : polyType) : typeKind
     =
   let a, r = target in
-  (a, substituteRho tk x r)
+  match substituteRho tk x r with
+  | Poly (a', r') -> Poly (a + a', r')
+  | Rho r -> Poly (a, r)
+  | Mono m -> Poly (a, T m)
 
 let substitute (tk : typeKind) (v : typeVar) = function
-  | Mono m -> Mono (substituteMono tk v m)
-  | Rho r -> Rho (substituteRho tk v r)
-  | Poly p -> Poly (substitutePoly tk v p)
+  | Mono m -> normalize (substituteMono tk v m)
+  | Rho r -> normalize (substituteRho tk v r)
+  | Poly p -> normalize (substitutePoly tk v p)
 
 let applySubstToTypeKind (s : substitution) (t : typeKind) : typeKind =
   List.fold_right (fun (x, s) -> substitute s x) s t

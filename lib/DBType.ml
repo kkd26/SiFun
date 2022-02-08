@@ -10,7 +10,11 @@ type monoType =
   | Fun of monoType * monoType
 
 and polyType = int * rhoType
-and rhoType = T of monoType | F of polyType * polyType
+
+and rhoType =
+  | T of monoType
+  | F of polyType * polyType
+  | P of polyType * polyType
 
 (** Kind of a type - monoType, rhoType, polyType *)
 type typeKind = Mono of monoType | Rho of rhoType | Poly of polyType
@@ -18,24 +22,25 @@ type typeKind = Mono of monoType | Rho of rhoType | Poly of polyType
 exception DBTypeException of string
 
 let rec monoTypeToString' var = function
-  | Var s -> string_of_int s
-  | FreshVar s -> "f" ^ string_of_int s
+  | Var v -> string_of_int v
+  | FreshVar v -> "f" ^ string_of_int v
   | Int -> "int"
   | Bool -> "bool"
   | Unit -> "unit"
-  | Pair (t1, t2) ->
-      "(" ^ monoTypeToString' var t1 ^ ", " ^ monoTypeToString' var t2 ^ ")"
-  | Fun (t1, t2) ->
-      let inner = monoTypeToString' var t1 in
-      (match t1 with Fun (_, _) -> "(" ^ inner ^ ")" | _ -> inner)
-      ^ " -> " ^ monoTypeToString' var t2
+  | Pair (m1, m2) ->
+      "(" ^ monoTypeToString' var m1 ^ ", " ^ monoTypeToString' var m2 ^ ")"
+  | Fun (m1, m2) ->
+      let inner = monoTypeToString' var m1 in
+      (match m1 with Fun (_, _) -> "(" ^ inner ^ ")" | _ -> inner)
+      ^ " -> " ^ monoTypeToString' var m2
 
-let rec rhoToString' var = function
-  | T t -> "R[" ^ monoTypeToString' var t ^ "]"
-  | F (s1, s2) ->
-      "R[" ^ polyToString' var s1 ^ "->" ^ polyToString' var s2 ^ "]"
+and rhoToString' var = function
+  | T m -> "R[" ^ monoTypeToString' var m ^ "]"
+  | F (p1, p2) ->
+      "R[" ^ polyToString' var p1 ^ "->" ^ polyToString' var p2 ^ "]"
+  | P (p1, p2) -> "R[" ^ polyToString' var p1 ^ "," ^ polyToString' var p2 ^ "]"
 
-and polyToString' var (a, r) =
+and polyToString' var ((a, r) : polyType) =
   "(" ^ string_of_int a ^ "," ^ rhoToString' var r ^ ")"
 
 let monoTypeToString = monoTypeToString' 1
@@ -73,6 +78,12 @@ let rec normalize = function
       match (tk1, tk2) with
       | Mono m1, Mono m2 -> normalize (Mono (Fun (m1, m2)))
       | _ -> Rho (F (typeKindToPoly tk1, typeKindToPoly tk2)))
+  | Rho (P (p1, p2)) -> (
+      let tk1 = normalize (Poly p1) in
+      let tk2 = normalize (Poly p2) in
+      match (tk1, tk2) with
+      | Mono m1, Mono m2 -> normalize (Mono (Pair (m1, m2)))
+      | _ -> Rho (P (typeKindToPoly tk1, typeKindToPoly tk2)))
   | Poly (0, r) -> normalize (Rho r)
   | Poly (a, r) -> Poly (a, typeKindToRho (normalize (Rho r)))
 
@@ -84,8 +95,8 @@ let update env newVal queryVal =
 let isMonoType =
   let rec isMonoType' acc : Type.monoType -> bool = function
     | ForAll _ -> false
-    | Pair (t1, t2) -> isMonoType' (isMonoType' acc t1) t2
-    | Fun (t1, t2) -> isMonoType' (isMonoType' acc t1) t2
+    | Pair (m1, m2) -> isMonoType' (isMonoType' acc m1) m2
+    | Fun (m1, m2) -> isMonoType' (isMonoType' acc m1) m2
     | _ -> acc
   in
   isMonoType' true
@@ -96,18 +107,20 @@ let rec monoTypeToDeBruijn' typeCtx (typeExpr : Type.monoType) : monoType =
   | Var v -> Var (typeCtx v)
   | Bool -> Bool
   | Unit -> Unit
-  | Pair (t1, t2) ->
-      Pair (monoTypeToDeBruijn' typeCtx t1, monoTypeToDeBruijn' typeCtx t2)
-  | Fun (t1, t2) ->
-      Fun (monoTypeToDeBruijn' typeCtx t1, monoTypeToDeBruijn' typeCtx t2)
+  | Pair (m1, m2) ->
+      Pair (monoTypeToDeBruijn' typeCtx m1, monoTypeToDeBruijn' typeCtx m2)
+  | Fun (m1, m2) ->
+      Fun (monoTypeToDeBruijn' typeCtx m1, monoTypeToDeBruijn' typeCtx m2)
   | _ -> raise (DBTypeException "Not a monoType")
 
-let rec rhoTypeToDeBruijn' typeCtx (typeExpr : Type.monoType) : rhoType =
+and rhoTypeToDeBruijn' typeCtx (typeExpr : Type.monoType) : rhoType =
   if isMonoType typeExpr then T (monoTypeToDeBruijn' typeCtx typeExpr)
   else
     match typeExpr with
     | Fun (t1, t2) ->
         F (polyTypeToDeBruijn' typeCtx t1, polyTypeToDeBruijn' typeCtx t2)
+    | Pair (t1, t2) ->
+        P (polyTypeToDeBruijn' typeCtx t1, polyTypeToDeBruijn' typeCtx t2)
     | _ -> raise (DBTypeException "Not a rhoType")
 
 (** Converts a polyType into the deBruijn notation *)
@@ -152,9 +165,10 @@ let rec shiftMono (i : typeVar) (n : typeVar) = function
   | Fun (m1, m2) -> Fun (shiftMono i n m1, shiftMono i n m2)
 
 (** Shifts rhoType variables by `i` *)
-let rec shiftRho (i : typeVar) (n : typeVar) = function
+and shiftRho (i : typeVar) (n : typeVar) = function
   | T m -> T (shiftMono i n m)
   | F (p1, p2) -> F (shiftPoly i n p1, shiftPoly i n p2)
+  | P (p1, p2) -> P (shiftPoly i n p1, shiftPoly i n p2)
 
 (** Shifts polyType variables by `i` *)
 and shiftPoly (i : typeVar) (n : typeVar) = function
@@ -166,28 +180,48 @@ let shiftType (i : typeVar) (n : typeVar) = function
   | Poly p -> Poly (shiftPoly i n p)
 
 (** Substitutes `monoType` under `Var n` inside a monoType expression *)
-let rec substMono (monoType : monoType) (n : typeVar) (m : monoType) =
+let rec substMono (typeKind : typeKind) (n : typeVar) (m : monoType) =
   match m with
-  | (Int | Bool | Unit | FreshVar _) as monoType -> monoType
-  | Var n' -> if n = n' then monoType else Var n'
-  | Pair (m1, m2) -> Pair (substMono monoType n m1, substMono monoType n m2)
-  | Fun (m1, m2) -> Fun (substMono monoType n m1, substMono monoType n m2)
+  | (Int | Bool | Unit | FreshVar _) as monoType -> Mono monoType
+  | Var n' -> if n = n' then typeKind else Mono m
+  | Pair (m1, m2) ->
+      Rho
+        (P
+           ( typeKindToPoly (substMono typeKind n m1),
+             typeKindToPoly (substMono typeKind n m2) ))
+  | Fun (m1, m2) ->
+      Rho
+        (F
+           ( typeKindToPoly (substMono typeKind n m1),
+             typeKindToPoly (substMono typeKind n m2) ))
 
 (** Substitutes `monoType` under `Var n` inside a rhoType expression *)
-let rec substRho (monoType : monoType) (n : typeVar) (r : rhoType) =
+and substRho (typeKind : typeKind) (n : typeVar) (r : rhoType) =
   match r with
-  | T m1 -> T (substMono monoType n m1)
-  | F (p1, p2) -> F (substPoly monoType n p1, substPoly monoType n p2)
+  | T m1 -> substMono typeKind n m1
+  | F (p1, p2) ->
+      Rho
+        (F
+           ( typeKindToPoly (substPoly typeKind n p1),
+             typeKindToPoly (substPoly typeKind n p2) ))
+  | P (p1, p2) ->
+      Rho
+        (P
+           ( typeKindToPoly (substPoly typeKind n p1),
+             typeKindToPoly (substPoly typeKind n p2) ))
 
 (** Substitutes `monoType` under `Var n` inside a polyType expression *)
-and substPoly (monoType : monoType) (n : typeVar) (p : polyType) =
+and substPoly (typeKind : typeKind) (n : typeVar) (p : polyType) =
   let a, r = p in
-  (a, substRho (shiftMono a 0 monoType) (n + a) r)
+  match substRho (shiftType a 0 typeKind) (n + a) r with
+  | Poly (a', r') -> Poly (a + a', r')
+  | Rho r -> Poly (a, r)
+  | Mono m -> Poly (a, T m)
 
 (** Substitutes `monoType` under `Var n` inside a type expression *)
-let substType (monoType : monoType) (n : typeVar) = function
-  | Mono m -> Mono (substMono monoType n m)
-  | Rho r -> Rho (substRho monoType n r)
-  | Poly p -> Poly (substPoly monoType n p)
+let substType (typeKind : typeKind) (n : typeVar) = function
+  | Mono m -> normalize (substMono typeKind n m)
+  | Rho r -> normalize (substRho typeKind n r)
+  | Poly p -> normalize (substPoly typeKind n p)
 
 let incChar c = String.make 1 (Char.chr (c + Char.code 'a'))
