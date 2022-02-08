@@ -1,4 +1,5 @@
 opam-version: "2.0"
+name: "sifun"
 version: "1.0.0"
 synopsis:
   "Interpreter for SiFun (Simple Functional) Language with three different type systems (supports Higher Rank Polymorphism)"
@@ -8,9 +9,12 @@ license: "gpl-3.0"
 homepage: "https://github.com/kkd26/SiFun"
 bug-reports: "https://github.com/kkd26/SiFun/issues"
 depends: [
+  "ocaml" {>= "4.06"}
+  "core"
   "dune" {>= "2.9"}
   "odoc" {with-doc}
-  "mehnir" {>= "2.1"}
+  "menhir"
+  "ounit2" {with-test}
 ]
 build: [
   ["dune" "subst"] {dev}
@@ -21,11 +25,9 @@ build: [
     name
     "-j"
     jobs
-    "--promote-install-files=false"
     "@install"
     "@runtest" {with-test}
     "@doc" {with-doc}
   ]
-  ["dune" "install" "-p" name "--create-install-files" name]
 ]
 dev-repo: "git+https://github.com/kkd26/SiFun"
