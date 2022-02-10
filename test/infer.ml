@@ -239,6 +239,40 @@ let nestedLambda _ =
   (* ASSERT *)
   assert_equal expected output
 
+let funPairTypedApp1True _ =
+  (* ARRANGE *)
+  let input : Debruijn.expr =
+    FunType
+      ( Poly (1, T (Fun (Var 0, Var 0))),
+        Pair
+          ( App (TypeApp (Var 0, Mono Int), Int 1),
+            App (TypeApp (Var 0, Mono Bool), Bool true) ) )
+  in
+  let expected =
+    Rho (F ((1, T (Fun (Var 0, Var 0))), (0, T (Pair (Int, Bool)))))
+  in
+  (* ACT *)
+  let output = snd (inferTypeHMV input) in
+  (* ASSERT *)
+  assert_equal expected output
+
+let appPairApp1TrueIdentity _ =
+  (* ARRANGE *)
+  let input : Debruijn.expr =
+    App
+      ( FunType
+          ( Poly (1, T (Fun (Var 0, Var 0))),
+            Pair
+              ( App (TypeApp (Var 0, Mono Int), Int 1),
+                App (TypeApp (Var 0, Mono Bool), Bool true) ) ),
+        Lam (FunType (Mono (Var 0), Var 0)) )
+  in
+  let expected = Mono (Pair (Int, Bool)) in
+  (* ACT *)
+  let output = snd (inferTypeHMV input) in
+  (* ASSERT *)
+  assert_equal expected output
+
 let suite =
   "TypeInferenceTest"
   >::: [
@@ -265,6 +299,8 @@ let suite =
          "nestedLambdaTypeAbstraction" >:: nestedLambdaTypeAbstraction;
          "lambdaTypeWithForAll" >:: lambdaTypeWithForAll;
          "nestedLambda" >:: nestedLambda;
+         "funPairTypedApp1True" >:: funPairTypedApp1True;
+         "appPairApp1TrueIdentity" >:: appPairApp1TrueIdentity;
        ]
 
 let () = run_test_tt_main suite

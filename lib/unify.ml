@@ -76,14 +76,10 @@ and unifyPoly (p1 : polyType) (p2 : polyType) : substitution IntState.t =
     | 0 -> unify [ (Rho r1, Rho r2) ]
     | n ->
         freshName >>= fun x ->
-        unify
-          [
-            ( Poly
-                ( n - 1,
-                  DBType.typeKindToRho
-                    (DBType.substRho (Mono (FreshVar x)) 0 r1) ),
-              Poly (n - 1, r2) );
-          ]
+        let rx =
+          typeKindToRho (normalize (substRho (Mono (FreshVar x)) 0 r1))
+        in
+        unify [ (Poly (n - 1, rx), Poly (n - 1, r2)) ]
   else
     raise
       (UnifyException
