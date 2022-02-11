@@ -10,10 +10,10 @@ homepage: "https://github.com/kkd26/SiFun"
 bug-reports: "https://github.com/kkd26/SiFun/issues"
 depends: [
   "ocaml" {>= "4.06"}
-  "core"
+  "core" {>= "v0.11.3"}
   "dune" {>= "2.9"}
   "odoc" {with-doc}
-  "menhir"
+  "menhir" {>= "20180523"}
   "ounit2" {with-test}
 ]
 build: [

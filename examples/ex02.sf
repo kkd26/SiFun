@@ -1,0 +1,4 @@
+fn x : int => x;
+lam a b c. fn x : b => fn y :c => fn z => (x,(y,z));
+(lam a. fn x : a => x) {int};
+(fn x : forall a. a->a => (x {int} 1, x {bool} true)) (lam a. fn y : a => y)
