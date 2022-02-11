@@ -8,18 +8,16 @@ let fromFile filename () =
     let lexbuf = Lexing.from_channel inx in
     lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = filename };
     let astList = lexbufToExprList lexbuf in
-    (* printAst astList; *)
     let dBAst = List.map toDeBruijn astList in
-    printDBAst dBAst;
     let reduced = List.map Simple.reduceAll dBAst in
-    printDBAst reduced;
     let infer = List.map Infer.inferTypeHMV dBAst in
+    let typeAndReduced = List.combine infer reduced in
     List.iter
-      (fun (subs, typ) ->
-        printSubst subs;
-        printTypeKind typ;
-        Printf.printf "\n")
-      infer;
+      (fun ((_, typ), reduced) ->
+        Printf.printf "- : %s | %s\n"
+          (DBType.typeKindToString typ)
+          (Debruijn.exprToString reduced))
+      typeAndReduced;
     Core.In_channel.close inx
   with e ->
     Exception.handleExceptions e;

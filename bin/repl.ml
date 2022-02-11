@@ -20,7 +20,7 @@ let repl () =
        (* reduce expression *)
        let reduced = Simple.reduceAll debruijn in
        (* print the result *)
-       printf "%s : %s"
+       printf "- : %s | %s"
          (DBType.typeKindToString typ)
          (Debruijn.exprToString reduced)
      with e -> Exception.handleExceptions e);

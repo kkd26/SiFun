@@ -26,7 +26,7 @@ There are two ways to interact with the interpreter:
 1. SiFun REPL (Read–eval–print loop) - interactive console
 
     ```
-    repl
+    sifuni
     ```
 
 2. SiFun Interpreter - run from file
