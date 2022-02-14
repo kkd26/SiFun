@@ -57,4 +57,4 @@ The additional features are (similar to System F):
 
 Note that `;` separates blocks of code and `;;` sends EOF, so stops execution.
 
-You can check [`./examples`](https://github.com/kkd26/SiFun/examples) for more information about the syntax and semantics.
+You can check [`./examples`](https://github.com/kkd26/SiFun/tree/main/examples) for more information about the syntax and semantics.
