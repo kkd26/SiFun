@@ -43,3 +43,11 @@ let printTypeKind typeKind =
   Printf.printf "TypeKind:\n%s\n" typeKindString
 
 let printSubst subst = Printf.printf "%s\n" (Subst.substToString subst)
+
+let printCtx ctx =
+  Printf.printf "[";
+  let _ =
+    List.map (fun tk -> Printf.printf "%s, " (DBType.typeKindToString tk)) ctx
+  in
+  ();
+  Printf.printf "]\n"

@@ -5,4 +5,5 @@ let handleExceptions e =
   | DBType.DBTypeException msg -> Printf.printf "\r%s" msg
   | Infer.InferException msg -> Printf.printf "\rInfer Error:\n%s" msg
   | Unify.UnifyException msg -> Printf.printf "\rUnify Error:\n%s" msg
+  | Failure msg -> Printf.printf "\rError:\n%s" msg
   | _ -> ()
