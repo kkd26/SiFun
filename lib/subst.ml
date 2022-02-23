@@ -54,15 +54,27 @@ let applySubstToTypeKind (s : substitution) (t : typeKind) : typeKind =
 let applySubstToCtx s (ctx : typeCtx) : typeCtx =
   List.map (applySubstToTypeKind s) ctx
 
-let combineSubst s1 s2 : substitution =
+let combineSubst (s1 : substitution) (s2 : substitution) : substitution =
   List.map (fun (x, t) -> (x, applySubstToTypeKind s1 t)) (s1 @ s2)
+
+let combineSubstUnique (s1 : substitution) (s2 : substitution) : substitution =
+  let _ =
+    List.filter (fun (y, _) -> List.exists (fun (x, _) -> x <> y) s2) s1
+  in
+  let s3 =
+    List.filter (fun (y, _) -> List.for_all (fun (x, _) -> x <> y) s2) s1
+  in
+  let s4 =
+    List.filter (fun (y, _) -> List.for_all (fun (x, _) -> x <> y) s1) s2
+  in
+  s3 @ s4
 
 let substFromList list : substitution =
   let n = List.length list in
   let range = List.init n (fun x -> x) in
   List.combine range list
 
-let substToString =
+let substToString : substitution -> string =
   let elemToString a (x, t) =
     a ^ string_of_int x ^ ":(" ^ typeKindToString t ^ ") "
   in

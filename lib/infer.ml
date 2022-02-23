@@ -102,50 +102,6 @@ let inferTypeHMV e =
   let open IntState in
   snd (runState (inferType' check emptyCtx e) ~init:0)
 
-let inst (s : polyType) =
-  let boundVariables, r = s in
-  let rec inst' r n =
-    let open IntState in
-    freshName >>= fun x ->
-    match n with
-    | 0 -> return r
-    | n ->
-        inst'
-          (DBType.typeKindToRho (DBType.substRho (Mono (FreshVar x)) (n - 1) r))
-          (n - 1)
-  in
-  inst' r boundVariables
-
-(* let rec dsk (s2 : polyType) : polyType IntState.t =
-     let open IntState in
-     pr s2 >>= fun (a, r) ->
-
-   and dsk' ((a,r) : polyType) : rho IntState.t =
-     match r with
-     |T t -> return (T t)
-     |F(s1,s2) -> dsk' s2 >>= fun r4 -> *)
-
-(* let rec infer (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
-     let open IntState in
-     match e with
-     | Int _ -> return (T Int)
-     | Var v ->
-         let s = TypeCtx.find v ctx in
-         inst s
-     | Fun e ->
-         freshName >>= fun x ->
-         let s = (0, T (FreshVar x)) in
-         let newCtx = TypeCtx.updateCtx ctx s in
-         infer newCtx e >>= fun r -> return (F (s, (0, r)))
-     | App (t, u) -> (
-         infer ctx t >>= fun s ->
-         match s with
-         | F (s1, s2) -> gen ctx u >>= fun s' -> dsk s' >>= fun s1' -> inst s2
-         | T _ -> failwith "error")
-     | _ -> return (T Int)
-
-   and gen (ctx : TypeCtx.typeCtx) (t : Debruijn.expr) =
-     let open IntState in
-     infer ctx t >>= fun r ->
-     let a = DBType.freeVarRho r - TypeCtx.freeVarCtx ctx in
-     return (a, r) *)
+let inferTypeBD e =
+  let open IntState in
+  snd (runState (Bidirection.inferType Infer emptyCtx e) ~init:0)

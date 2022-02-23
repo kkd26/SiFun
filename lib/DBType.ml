@@ -44,7 +44,9 @@ and polyToString' var ((a, r) : polyType) =
   "(" ^ string_of_int a ^ "," ^ rhoToString' var r ^ ")"
 
 let monoTypeToString = monoTypeToString' 1
+
 let rhoToString = rhoToString' 1
+
 let polyToString = polyToString' 1
 
 let typeKindToString = function
@@ -69,6 +71,7 @@ let typeKindToRho = function
 
 let typeKindToPoly = function Poly p -> p | t -> (0, typeKindToRho t)
 
+(** Return normalized (simplified) typeKind *)
 let rec normalize = function
   | Mono m -> Mono m
   | Rho (T m) -> Mono m
@@ -223,5 +226,17 @@ let substType (typeKind : typeKind) (n : typeVar) = function
   | Mono m -> normalize (substMono typeKind n m)
   | Rho r -> normalize (substRho typeKind n r)
   | Poly p -> normalize (substPoly typeKind n p)
+
+let applyType (typeKind : typeKind) (tk : typeKind) =
+  let p = typeKindToPoly tk in
+  let a, r = p in
+  let p =
+    match a with
+    | 0 -> Poly p
+    | a ->
+        Poly
+          (a - 1, typeKindToRho (shiftType (-1) a (substRho typeKind (a - 1) r)))
+  in
+  normalize p
 
 let incChar c = String.make 1 (Char.chr (c + Char.code 'a'))

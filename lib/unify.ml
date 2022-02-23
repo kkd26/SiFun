@@ -77,7 +77,7 @@ and unifyPoly (p1 : polyType) (p2 : polyType) : substitution IntState.t =
     | n ->
         freshName >>= fun x ->
         let rx =
-          typeKindToRho (normalize (substRho (Mono (FreshVar x)) 0 r1))
+          typeKindToRho (normalize (substRho (Mono (FreshVar x)) (n - 1) r1))
         in
         unify [ (Poly (n - 1, rx), Poly (n - 1, r2)) ]
   else
@@ -86,21 +86,15 @@ and unifyPoly (p1 : polyType) (p2 : polyType) : substitution IntState.t =
          ("Different size " ^ polyToString p1 ^ " and " ^ polyToString p2))
 
 and unifyOne (t1 : typeKind) (t2 : typeKind) : substitution IntState.t =
-  let t2 =
-    match t1 with
-    | Mono _ -> Mono (typeKindToMono t2)
-    | Rho _ -> Rho (typeKindToRho t2)
-    | Poly _ -> Poly (typeKindToPoly t2)
-  in
+  let t1 = normalize t1 in
+  let t2 = normalize t2 in
+
   match (t1, t2) with
-  | Mono m1, Mono m2 -> unifyMono m1 m2
-  | Rho r1, Rho r2 -> unifyRho r1 r2
-  | Poly p1, Poly p2 -> unifyPoly p1 p2
-  | _, _ ->
-      raise
-        (UnifyException
-           ("Cannot unify " ^ typeKindToString t1 ^ " and "
-          ^ typeKindToString t2))
+  | Poly p, _ -> unifyPoly p (typeKindToPoly t2)
+  | _, Poly p -> unifyPoly (typeKindToPoly t1) p
+  | Rho r, _ -> unifyRho r (typeKindToRho t2)
+  | _, Rho r -> unifyRho (typeKindToRho t1) r
+  | Mono m, _ -> unifyMono m (typeKindToMono t2)
 
 and unify (s : (typeKind * typeKind) list) : substitution IntState.t =
   let open IntState in
