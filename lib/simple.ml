@@ -75,10 +75,8 @@ let rec reduce = function
   | Fun _ -> None
   | App (e1, e2) -> (
       match e1 with
-      | Fun e | FunType (_, e) -> (
-          if isValue e2 then Some (shift (-1) 0 (subst (shift 1 0 e2) 0 e))
-          else
-            match reduce e2 with Some e -> Some (App (e1, e)) | None -> None)
+      | Fun e | FunType (_, e) -> 
+          Some (shift (-1) 0 (subst (shift 1 0 e2) 0 e))
       | _ -> (
           match reduce e1 with Some e -> Some (App (e, e2)) | None -> None))
   | FunType _ -> None
