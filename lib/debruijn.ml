@@ -14,6 +14,7 @@ type expr =
   | FunType of DBType.typeKind * expr
   | TypeApp of expr * DBType.typeKind
   | Lam of expr
+  | Annot of expr * DBType.typeKind
 
 exception DebruijnException of string
 
@@ -21,6 +22,7 @@ let emptyEnvErrorMessage msg var =
   Printf.sprintf "%s - unbound value %s" msg var
 
 let emptyEnv s var = raise (DebruijnException (emptyEnvErrorMessage s var))
+
 let update env x y = if y = x then 0 else 1 + env y
 
 let toDeBruijn =
@@ -49,6 +51,9 @@ let toDeBruijn =
     | Lam (v, e) ->
         let newTypeCtx = update typeCtx v in
         Lam (toDeBruijn' ctx newTypeCtx e)
+    | Annot (e, t) ->
+        let tk = DBType.typeToDeBruijn typeCtx t in
+        Annot (toDeBruijn' ctx typeCtx e, tk)
   in
   toDeBruijn' (emptyEnv "Empty var env") (emptyEnv "Empty type env")
 
@@ -84,6 +89,10 @@ let exprToString =
     | Lam e ->
         "lam " ^ DBType.incChar typeVar ^ "."
         ^ exprToString' (typeVar + 1) var e
+    | Annot (e, t) ->
+        "("
+        ^ exprToString' typeVar var e
+        ^ ") : (" ^ DBType.typeKindToString t ^ ")"
   in
   exprToString' 1 16
 

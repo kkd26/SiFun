@@ -43,6 +43,7 @@ let rec unifyMono (m1 : monoType) (m2 : monoType) : substitution IntState.t =
       unify [ (Mono m3, Mono m5); (Mono m4, Mono m6) ]
   | Pair (m3, m4), Pair (m5, m6) ->
       unify [ (Mono m3, Mono m5); (Mono m4, Mono m6) ]
+      (* add rule FreshVar, Var -> error *)
   | FreshVar n, t | t, FreshVar n -> (
       try
         inTypeMono n t;
@@ -59,8 +60,14 @@ let rec unifyMono (m1 : monoType) (m2 : monoType) : substitution IntState.t =
 
 and unifyRho (r1 : rhoType) (r2 : rhoType) : substitution IntState.t =
   match (r1, r2) with
+  | T (Fun (a, b)), F (p1, p2) -> unify [ (Mono a, Poly p1); (Mono b, Poly p2) ]
+  | F (p1, p2), T (Fun (a, b)) -> unify [ (Mono a, Poly p1); (Mono b, Poly p2) ]
+  | T (Pair (a, b)), P (p1, p2) ->
+      unify [ (Mono a, Poly p1); (Mono b, Poly p2) ]
+  | P (p1, p2), T (Pair (a, b)) ->
+      unify [ (Mono a, Poly p1); (Mono b, Poly p2) ]
   | T m1, T m2 -> unifyMono m1 m2
-  | F (p1, p2), F (p3, p4) -> unify [ (Poly p3, Poly p1); (Poly p2, Poly p4) ]
+  | F (p1, p2), F (p3, p4) -> unify [ (Poly p1, Poly p3); (Poly p2, Poly p4) ]
   | P (p1, p2), P (p3, p4) -> unify [ (Poly p1, Poly p3); (Poly p2, Poly p4) ]
   | _, _ ->
       raise
@@ -86,10 +93,17 @@ and unifyPoly (p1 : polyType) (p2 : polyType) : substitution IntState.t =
          ("Different size " ^ polyToString p1 ^ " and " ^ polyToString p2))
 
 and unifyOne (t1 : typeKind) (t2 : typeKind) : substitution IntState.t =
+  let open IntState in
   let t1 = normalize t1 in
   let t2 = normalize t2 in
 
   match (t1, t2) with
+  | Mono (FreshVar x), y ->
+      inTypePoly x (typeKindToPoly y);
+      return [ (x, t2) ]
+  | y, Mono (FreshVar x) ->
+      inTypePoly x (typeKindToPoly y);
+      return [ (x, t1) ]
   | Poly p, _ -> unifyPoly p (typeKindToPoly t2)
   | _, Poly p -> unifyPoly (typeKindToPoly t1) p
   | Rho r, _ -> unifyRho r (typeKindToRho t2)

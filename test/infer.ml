@@ -158,12 +158,13 @@ let firstAndTypeApplication _ =
   (* ARRANGE *)
   let input : Debruijn.expr = Fun (TypeApp (Fst (Var 0), Mono Int)) in
   let expected =
-    Unify.UnifyException "Different size (1,R[f3]) and (0,R[f1])"
+    Rho
+      (F ((0, P ((1, T (FreshVar 3)), (0, T (FreshVar 2)))), (0, T (FreshVar 3))))
   in
   (* ACT *)
-  let output _ = snd (inferTypeHMV input) in
+  let output = snd (inferTypeHMV input) in
   (* ASSERT *)
-  assert_raises expected output
+  assert_equal expected output
 
 let firstAndTypeApplication2 _ =
   (* ARRANGE *)
@@ -171,12 +172,13 @@ let firstAndTypeApplication2 _ =
     Fun (TypeApp (TypeApp (Fst (Var 0), Mono Int), Mono Bool))
   in
   let expected =
-    Unify.UnifyException "Different size (1,R[f3]) and (0,R[f1])"
+    Rho
+      (F ((0, P ((2, T (FreshVar 4)), (0, T (FreshVar 2)))), (0, T (FreshVar 4))))
   in
   (* ACT *)
-  let output _ = snd (inferTypeHMV input) in
+  let output = snd (inferTypeHMV input) in
   (* ASSERT *)
-  assert_raises expected output
+  assert_equal expected output
 
 let typedFunction _ =
   (* ARRANGE *)

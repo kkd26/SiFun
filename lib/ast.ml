@@ -14,6 +14,7 @@ type expr =
   | FunType of var * Type.monoType * expr
   | TypeApp of expr * Type.monoType
   | Lam of Type.typeVar * expr
+  | Annot of expr * Type.monoType
 
 let bigLamFromList typeVarList expr =
   List.fold_right (fun v e -> Lam (v, e)) typeVarList expr
@@ -33,6 +34,8 @@ let rec exprToString = function
   | TypeApp (e, t) ->
       "TypeApp(" ^ exprToString e ^ "," ^ Type.typeExprToString t ^ ")"
   | Lam (v, e) -> "Lam(" ^ v ^ "," ^ exprToString e ^ ")"
+  | Annot (e, t) ->
+      "Annot(" ^ exprToString e ^ "," ^ Type.typeExprToString t ^ ")"
 
 let rec exprListToString = function
   | [] -> ""

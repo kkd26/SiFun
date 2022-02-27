@@ -37,6 +37,7 @@ expr:
 typeAppExpr: 
   | b = basicExpr                                  {b}
   | e = typeAppExpr LCUR t = typeExpr RCUR         {Ast.TypeApp(e, t)}
+  | e = basicExpr COLON t = typeExpr               {Ast.Annot(e, t)}
 
 basicExpr:
   | i = INT                                        {Ast.Int(i)}

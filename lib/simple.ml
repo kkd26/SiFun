@@ -23,6 +23,7 @@ let rec shift i c = function
   | FunType (t, e) -> FunType (t, shift i (c + 1) e)
   | TypeApp (e, t) -> TypeApp (shift i c e, t)
   | Lam e -> Lam (shift i c e)
+  | Annot (e, t) -> Annot (shift i c e, t)
 
 let rec subst e n = function
   | Int n -> Int n
@@ -37,6 +38,7 @@ let rec subst e n = function
   | FunType (t, e1) -> FunType (t, subst (shift 1 0 e) (n + 1) e1)
   | TypeApp (e1, t) -> TypeApp (subst e n e1, t)
   | Lam e1 -> Lam (subst e n e1)
+  | Annot (e1, t) -> Annot (subst e n e1, t)
 
 let rec shiftType i c = function
   | Pair (e1, e2) -> Pair (shiftType i c e1, shiftType i c e2)
@@ -47,6 +49,7 @@ let rec shiftType i c = function
   | FunType (p, e) -> FunType (DBType.shiftType i c p, shiftType i c e)
   | TypeApp (e, m) -> TypeApp (shiftType i c e, DBType.shiftType i c m)
   | Lam e -> Lam (shiftType i (c + 1) e)
+  | Annot (e, m) -> Annot (shiftType i c e, DBType.shiftType i c m)
   | e -> e
 
 let rec substType t n = function
@@ -58,6 +61,7 @@ let rec substType t n = function
   | FunType (p, e1) -> FunType (DBType.substType t n p, substType t n e1)
   | TypeApp (e1, m) -> TypeApp (substType t n e1, DBType.substType t n m)
   | Lam e1 -> Lam (substType (DBType.shiftType 1 0 t) (n + 1) e1)
+  | Annot (e1, m) -> Annot (substType t n e1, DBType.substType t n m)
   | e -> e
 
 let rec reduce = function
@@ -75,8 +79,7 @@ let rec reduce = function
   | Fun _ -> None
   | App (e1, e2) -> (
       match e1 with
-      | Fun e | FunType (_, e) -> 
-          Some (shift (-1) 0 (subst (shift 1 0 e2) 0 e))
+      | Fun e | FunType (_, e) -> Some (shift (-1) 0 (subst (shift 1 0 e2) 0 e))
       | _ -> (
           match reduce e1 with Some e -> Some (App (e, e2)) | None -> None))
   | FunType _ -> None
@@ -86,6 +89,8 @@ let rec reduce = function
       | _ -> (
           match reduce e1 with Some e -> Some (TypeApp (e, t)) | None -> None))
   | Lam _ -> None
+  | Annot (e, _) -> Some e
 
 let doStep e = match reduce e with Some e -> e | None -> e
+
 let rec reduceAll e = match reduce e with Some e -> reduceAll e | None -> e

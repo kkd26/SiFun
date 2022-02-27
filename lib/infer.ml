@@ -86,6 +86,7 @@ let rec inferType' check (ctx : typeCtx) (e : Debruijn.expr) :
       inferType' check (shift 1 0 ctx) e >>= fun (s1, t1) ->
       let a, r = typeKindToPoly t1 in
       returnNormalized (s1, Poly (a + 1, r))
+  | Annot (_, t) -> returnNormalized (emptySubst, t)
 
 let inferType (e : Debruijn.expr) : substitution * typeKind =
   let check (e : Debruijn.expr) =

@@ -22,9 +22,10 @@ let rec inferType' (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
       inst Infer tk >>= fun tk -> returnNormalized (emptySubst, tk)
   | Fun f ->
       freshName >>= fun x ->
-      let newCtx = updateCtx ctx (Mono (FreshVar x)) in
+      let tx = Mono (FreshVar x) in
+      let newCtx = updateCtx ctx tx in
       inferType' newCtx f >>= fun (s, t) ->
-      let tk = applySubstToTypeKind s (Mono (FreshVar x)) in
+      let tk = applySubstToTypeKind s tx in
       returnNormalized (s, Rho (F (typeKindToPoly tk, typeKindToPoly t)))
   | App (f, g) ->
       inferType' ctx f >>= fun (s1, tf) ->
@@ -33,19 +34,15 @@ let rec inferType' (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
       freshName >>= fun y ->
       unify [ (Mono (Fun (FreshVar x, FreshVar y)), tf) ] >>= fun s2 ->
       let tx = applySubstToTypeKind s2 (Mono (FreshVar x)) in
-
       gen (Check tx) newCtx g >>= fun (s3, _) ->
-      Utils.printTypeKind tf;
-      (* Utils.printSubst s3; *)
       let s = combineSubst s3 (combineSubst s2 s1) in
       inst Infer (applySubstToTypeKind s (Mono (FreshVar y))) >>= fun t ->
       returnNormalized (s, t)
   | Pair (e1, e2) ->
       inferType' ctx e1 >>= fun (s1, t1) ->
-      (* let newCtx = applySubstToCtx s1 ctx in *)
-      inferType' ctx e2 >>= fun (s2, t2) ->
-      (* Utils.printSubst s1;
-         Utils.printSubst s2; *)
+      let newCtx = applySubstToCtx s1 ctx in
+      (* you have to leave it *)
+      inferType' newCtx e2 >>= fun (s2, t2) ->
       let s3 = combineSubstUnique s1 s2 in
       returnNormalized (s3, Rho (P (typeKindToPoly t1, typeKindToPoly t2)))
   | (Fst e | Snd e) as e1 ->
@@ -86,6 +83,9 @@ let rec inferType' (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
       inferType' (shift 1 0 ctx) e >>= fun (s1, t1) ->
       let a, r = typeKindToPoly t1 in
       returnNormalized (s1, Poly (a + 1, r))
+  | Annot (e, p) ->
+      gen (Check p) ctx e >>= fun (_, _) ->
+      inst Infer p >>= fun tk -> returnNormalized (emptySubst, tk)
 
 and check' (tk : typeKind) (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
   let open IntState in
@@ -111,7 +111,7 @@ and check' (tk : typeKind) (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
       let tk = applySubstToTypeKind s (Mono (FreshVar x)) in
       returnNormalized (s, Rho (F (typeKindToPoly tk, typeKindToPoly t)))
   | App (f, g) ->
-      check' tk ctx f >>= fun (s1, tf) ->
+      inferType' ctx f >>= fun (s1, tf) ->
       let newCtx = applySubstToCtx s1 ctx in
       freshName >>= fun x ->
       freshName >>= fun y ->
@@ -122,11 +122,14 @@ and check' (tk : typeKind) (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
       inst (Check tk) (applySubstToTypeKind s (Mono (FreshVar y))) >>= fun t ->
       returnNormalized (s, t)
   | Pair (e1, e2) ->
-      check' tk ctx e1 >>= fun (s1, t1) ->
-      (* let newCtx = applySubstToCtx s1 ctx in *)
-      check' tk ctx e2 >>= fun (s2, t2) ->
-      (* Utils.printSubst s1;
-         Utils.printSubst s2; *)
+      freshName >>= fun x ->
+      freshName >>= fun y ->
+      unify [ (Mono (Pair (FreshVar x, FreshVar y)), tk) ] >>= fun s ->
+      let tx = applySubstToTypeKind s (Mono (FreshVar x)) in
+      check' tx ctx e1 >>= fun (s1, t1) ->
+      let newCtx = applySubstToCtx s1 ctx in
+      let ty = applySubstToTypeKind s (Mono (FreshVar y)) in
+      check' ty newCtx e2 >>= fun (s2, t2) ->
       let s3 = combineSubst s1 s2 in
       returnNormalized (s3, Rho (P (typeKindToPoly t1, typeKindToPoly t2)))
   | (Fst e | Snd e) as e1 ->
@@ -167,13 +170,16 @@ and check' (tk : typeKind) (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
       check' tk (shift 1 0 ctx) e >>= fun (s1, t1) ->
       let a, r = typeKindToPoly t1 in
       returnNormalized (s1, Poly (a + 1, r))
+  | Annot (e, t) ->
+      gen (Check t) ctx e >>= fun (_, _) ->
+      freshName >>= fun x ->
+      let tx = Mono (FreshVar x) in
+      inst (Check tx) t >>= fun tk -> returnNormalized (emptySubst, tk)
 
-and gen (d : direction) (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
-  match d with
+and gen = function
   | Infer -> failwith "not supported"
   | Check tk ->
       let _, r = pr tk in
-      check' (normalize (Rho r)) ctx e
+      check' (normalize (Rho r))
 
-let inferType (d : direction) =
-  match d with Infer -> inferType' | Check tx -> check' tx
+let inferType = function Infer -> inferType' | Check tx -> check' tx
