@@ -34,6 +34,7 @@ let rec inferType' (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
       freshName >>= fun y ->
       unify [ (Mono (Fun (FreshVar x, FreshVar y)), tf) ] >>= fun s2 ->
       let tx = applySubstToTypeKind s2 (Mono (FreshVar x)) in
+      let newCtx = applySubstToCtx s2 newCtx in
       gen (Check tx) newCtx g >>= fun (s3, _) ->
       let s = combineSubst s3 (combineSubst s2 s1) in
       inst Infer (applySubstToTypeKind s (Mono (FreshVar y)))
@@ -160,9 +161,16 @@ and check' (tk : typeKind) (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
       in
       returnNormalized (s3, tw)
   | FunType (t, f) ->
-      let newCtx = updateCtx ctx t in
+      freshName >>= fun x ->
+      freshName >>= fun y ->
+      unify [ (Mono (Fun (FreshVar x, FreshVar y)), tk) ] >>= fun s ->
+      let tx = applySubstToTypeKind s (Mono (FreshVar x)) in
+      inst (Check t) tx >>= fun (s1, t1) ->
+      let newCtx = updateCtx ctx t1 in
+      let s = combineSubst s1 s in
+      let tk = applySubstToTypeKind s (Mono (FreshVar y)) in
       check' tk newCtx f >>= fun (s1, t1) ->
-      let m1 = applySubstToTypeKind s1 t in
+      let m1 = applySubstToTypeKind s1 t1 in
       returnNormalized (s1, Rho (F (typeKindToPoly m1, typeKindToPoly t1)))
   | Lam e ->
       check' tk (shift 1 0 ctx) e >>= fun (s1, t1) ->

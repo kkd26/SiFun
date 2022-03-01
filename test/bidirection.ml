@@ -297,6 +297,17 @@ let appPairApp1TrueIdentityNotAnnotated _ =
   (* ASSERT *)
   assert_raises expected output
 
+let appVar0Var0 _ =
+  (* ARRANGE *)
+  let input : Debruijn.expr = Fun (App (Var 0, Var 0)) in
+  let expected =
+    Unify.UnifyException "Circular dependencies in monoType f1 -> f2 and f1"
+  in
+  (* ACT *)
+  let output _ = snd (inferTypeBD input) in
+  (* ASSERT *)
+  assert_raises expected output
+
 let suite =
   "TypeInferenceTest"
   >::: [
@@ -328,6 +339,7 @@ let suite =
          "appPairApp1TrueIdentityAnnotated" >:: appPairApp1TrueIdentityAnnotated;
          "appPairApp1TrueIdentityNotAnnotated"
          >:: appPairApp1TrueIdentityNotAnnotated;
+         "appVar0Var0" >:: appVar0Var0;
        ]
 
 let () = run_test_tt_main suite
