@@ -7,9 +7,9 @@ open Prenex
 open Deepskolem
 open Direction
 
-let returnNormalized (sub, typ) =
+let returnCombinedSubst s (sub, typ) =
   let open IntState in
-  return (sub, normalize typ)
+  return (combineSubst sub s, normalize typ)
 
 let rec inferType' (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
   let open IntState in
@@ -19,7 +19,7 @@ let rec inferType' (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
   | Unit -> returnNormalized (emptySubst, Mono Unit)
   | Var x ->
       let tk : typeKind = find x ctx in
-      inst Infer tk >>= fun tk -> returnNormalized (emptySubst, tk)
+      inst Infer tk
   | Fun f ->
       freshName >>= fun x ->
       let tx = Mono (FreshVar x) in
@@ -36,8 +36,8 @@ let rec inferType' (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
       let tx = applySubstToTypeKind s2 (Mono (FreshVar x)) in
       gen (Check tx) newCtx g >>= fun (s3, _) ->
       let s = combineSubst s3 (combineSubst s2 s1) in
-      inst Infer (applySubstToTypeKind s (Mono (FreshVar y))) >>= fun t ->
-      returnNormalized (s, t)
+      inst Infer (applySubstToTypeKind s (Mono (FreshVar y)))
+      >>= returnCombinedSubst s
   | Pair (e1, e2) ->
       inferType' ctx e1 >>= fun (s1, t1) ->
       let newCtx = applySubstToCtx s1 ctx in
@@ -83,9 +83,7 @@ let rec inferType' (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
       inferType' (shift 1 0 ctx) e >>= fun (s1, t1) ->
       let a, r = typeKindToPoly t1 in
       returnNormalized (s1, Poly (a + 1, r))
-  | Annot (e, p) ->
-      gen (Check p) ctx e >>= fun (_, _) ->
-      inst Infer p >>= fun tk -> returnNormalized (emptySubst, tk)
+  | Annot (e, p) -> gen (Check p) ctx e >>= fun (_, _) -> inst Infer p
 
 and check' (tk : typeKind) (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
   let open IntState in
@@ -97,7 +95,7 @@ and check' (tk : typeKind) (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
       unify [ (tk, Mono Unit) ] >>= fun s -> returnNormalized (s, Mono Unit)
   | Var x ->
       let tk1 : typeKind = find x ctx in
-      inst (Check tk) tk1 >>= fun tk2 -> returnNormalized (emptySubst, tk2)
+      inst (Check tk) tk1
   | Fun f ->
       freshName >>= fun x ->
       let newCtx = updateCtx ctx (Mono (FreshVar x)) in
@@ -119,8 +117,8 @@ and check' (tk : typeKind) (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
       let tx = applySubstToTypeKind s2 (Mono (FreshVar x)) in
       gen (Check tx) newCtx g >>= fun (s3, _) ->
       let s = combineSubst s3 (combineSubst s2 s1) in
-      inst (Check tk) (applySubstToTypeKind s (Mono (FreshVar y))) >>= fun t ->
-      returnNormalized (s, t)
+      inst (Check tk) (applySubstToTypeKind s (Mono (FreshVar y)))
+      >>= returnCombinedSubst s
   | Pair (e1, e2) ->
       freshName >>= fun x ->
       freshName >>= fun y ->
@@ -174,7 +172,7 @@ and check' (tk : typeKind) (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
       gen (Check t) ctx e >>= fun (_, _) ->
       freshName >>= fun x ->
       let tx = Mono (FreshVar x) in
-      inst (Check tx) t >>= fun tk -> returnNormalized (emptySubst, tk)
+      inst (Check tx) t
 
 and gen = function
   | Infer -> failwith "not supported"
