@@ -41,4 +41,6 @@ and inst (d : direction) (p : typeKind) : (substitution * typeKind) IntState.t =
       match a with
       | 0 -> returnNormalized (emptySubst, Rho r)
       | _ -> freshName >>= fun x -> inst d (applyType (Mono (FreshVar x)) p))
-  | Check tk -> dsk p (typeKindToPoly tk) >>= fun s -> returnNormalized (s, p)
+  | Check tk ->
+      dsk p (typeKindToPoly tk) >>= fun s ->
+      returnNormalized (s, applySubstToTypeKind s p)
