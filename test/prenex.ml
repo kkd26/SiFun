@@ -91,11 +91,8 @@ let polyNestedFunctions _ =
   (* ARRANGE *)
   let input = Poly (1, F ((0, T (Var 0)), (1, T (Fun (Var 0, Var 0))))) in
   let expected = (2, T (Fun (Var 1, Fun (Var 0, Var 0)))) in
-  Utils.printTypeKind input;
-  Utils.printTypeKind (Poly expected);
   (* ACT *)
   let output = pr input in
-  Utils.printTypeKind (Poly output);
   (* ASSERT *)
   assert_equal output expected
 
