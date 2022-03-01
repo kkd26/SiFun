@@ -1,3 +1,3 @@
 (tests
- (names ast debruijn unify infer prenex)
+ (names ast debruijn unify infer prenex bidirection)
  (libraries sifun ounit2))
