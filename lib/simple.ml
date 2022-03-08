@@ -24,6 +24,7 @@ let rec shift i c = function
   | TypeApp (e, t) -> TypeApp (shift i c e, t)
   | Lam e -> Lam (shift i c e)
   | Annot (e, t) -> Annot (shift i c e, t)
+  | List e -> List (List.map (shift i c) e)
 
 let rec subst e n = function
   | Int n -> Int n
@@ -39,6 +40,7 @@ let rec subst e n = function
   | TypeApp (e1, t) -> TypeApp (subst e n e1, t)
   | Lam e1 -> Lam (subst e n e1)
   | Annot (e1, t) -> Annot (subst e n e1, t)
+  | List e1 -> List (List.map (subst e n) e1)
 
 let rec shiftType i c = function
   | Pair (e1, e2) -> Pair (shiftType i c e1, shiftType i c e2)
@@ -50,6 +52,7 @@ let rec shiftType i c = function
   | TypeApp (e, m) -> TypeApp (shiftType i c e, DBType.shiftType i c m)
   | Lam e -> Lam (shiftType i (c + 1) e)
   | Annot (e, m) -> Annot (shiftType i c e, DBType.shiftType i c m)
+  | List e -> List (List.map (shiftType i c) e)
   | e -> e
 
 let rec substType t n = function
@@ -62,6 +65,7 @@ let rec substType t n = function
   | TypeApp (e1, m) -> TypeApp (substType t n e1, DBType.substType t n m)
   | Lam e1 -> Lam (substType (DBType.shiftType 1 0 t) (n + 1) e1)
   | Annot (e1, m) -> Annot (substType t n e1, DBType.substType t n m)
+  | List e -> List (List.map (substType t n) e)
   | e -> e
 
 let rec reduce = function
@@ -74,8 +78,16 @@ let rec reduce = function
       | Some e -> Some (Pair (e, e2))
       | None -> (
           match reduce e2 with Some e -> Some (Pair (e1, e)) | None -> None))
-  | Fst e1 -> ( match e1 with Pair (e1, _) -> Some e1 | _ -> None)
-  | Snd e1 -> ( match e1 with Pair (_, e2) -> Some e2 | _ -> None)
+  | Fst e1 -> (
+      match e1 with
+      | Pair (e1, _) -> Some e1
+      | _ -> (
+          match reduce e1 with Some (Pair (e1, _)) -> Some e1 | _ -> None))
+  | Snd e1 -> (
+      match e1 with
+      | Pair (_, e2) -> Some e2
+      | _ -> (
+          match reduce e1 with Some (Pair (_, e2)) -> Some e2 | _ -> None))
   | Fun _ -> None
   | App (e1, e2) -> (
       match e1 with
@@ -90,6 +102,18 @@ let rec reduce = function
           match reduce e1 with Some e -> Some (TypeApp (e, t)) | None -> None))
   | Lam _ -> None
   | Annot (e, _) -> Some e
+  | List e -> reduceList e
+
+and reduceList = function
+  | [] -> None
+  | x :: xs -> (
+      let head = reduce x in
+      let tail = reduceList xs in
+      match (head, tail) with
+      | Some e, None -> Some (List (e :: xs))
+      | None, Some (List e) -> Some (List (x :: e))
+      | Some e1, Some (List e2) -> Some (List (e1 :: e2))
+      | _ -> None)
 
 let doStep e = match reduce e with Some e -> e | None -> e
 

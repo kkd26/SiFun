@@ -85,6 +85,21 @@ let rec inferType' (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
       let a, r = typeKindToPoly t1 in
       returnNormalized (s1, Poly (a + 1, r))
   | Annot (e, p) -> gen (Check p) ctx e >>= fun (_, _) -> inst Infer p
+  | List e -> (
+      match e with
+      | [] ->
+          freshName >>= fun x ->
+          returnNormalized (emptySubst, Mono (List (FreshVar x)))
+      | x :: xs ->
+          inferType' ctx (List xs) >>= fun (s1, t1) ->
+          Utils.printTypeKind t1;
+          let t1 = getListType t1 in
+          Utils.printTypeKind t1;
+          inferType' ctx x >>= fun (s2, t2) ->
+          unify [ (t1, t2) ] >>= fun s3 ->
+          let s = combineSubst s3 (combineSubst s2 s1) in
+          let t = tkToList (applySubstToTypeKind s t1) in
+          returnNormalized (s, t))
 
 and check' (tk : typeKind) (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
   let open IntState in
@@ -181,6 +196,11 @@ and check' (tk : typeKind) (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
       freshName >>= fun x ->
       let tx = Mono (FreshVar x) in
       inst (Check tx) t
+  | List e ->
+      inferType' ctx (List e) >>= fun (s1, t1) ->
+      unify [ (tk, t1) ] >>= fun s2 ->
+      let s = combineSubst s2 s1 in
+      returnNormalized (s, applySubstToTypeKind s tk)
 
 and gen = function
   | Infer -> failwith "not supported"

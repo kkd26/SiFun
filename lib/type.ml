@@ -8,6 +8,7 @@ type monoType =
   | Pair of monoType * monoType
   | Fun of monoType * monoType
   | ForAll of typeVar * monoType
+  | List of monoType
 
 let forAllFromList typeVarList typeExpr =
   List.fold_right (fun v t -> ForAll (v, t)) typeVarList typeExpr
@@ -27,3 +28,4 @@ let rec typeExprToString = function
   | Fun (t1, t2) ->
       "Fun(" ^ typeExprToString t1 ^ "," ^ typeExprToString t2 ^ ")"
   | ForAll (s, t) -> "ForAll(" ^ s ^ "," ^ typeExprToString t ^ ")"
+  | List m -> "List(" ^ typeExprToString m ^ ")"

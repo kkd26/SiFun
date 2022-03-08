@@ -26,6 +26,7 @@ and inTypeRho n r =
   | P (p1, p2) ->
       inTypePoly n p1;
       inTypePoly n p2
+  | L p -> inTypePoly n p
 
 and inTypePoly n p =
   let _, r = p in
@@ -66,6 +67,7 @@ and unifyRho (r1 : rhoType) (r2 : rhoType) : substitution IntState.t =
       unify [ (Mono a, Poly p1); (Mono b, Poly p2) ]
   | P (p1, p2), T (Pair (a, b)) ->
       unify [ (Mono a, Poly p1); (Mono b, Poly p2) ]
+  | L p1, L p2 -> unifyPoly p1 p2
   | T m1, T m2 -> unifyMono m1 m2
   | F (p1, p2), F (p3, p4) -> unify [ (Poly p1, Poly p3); (Poly p2, Poly p4) ]
   | P (p1, p2), P (p3, p4) -> unify [ (Poly p1, Poly p3); (Poly p2, Poly p4) ]

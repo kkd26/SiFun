@@ -34,6 +34,7 @@ and substituteRho (tk : typeKind) (x : typeVar) (target : rhoType) : typeKind =
         (P
            ( typeKindToPoly (substitutePoly tk x p1),
              typeKindToPoly (substitutePoly tk x p2) ))
+  | L p -> Rho (L (typeKindToPoly (substitutePoly tk x p)))
 
 and substitutePoly (tk : typeKind) (x : typeVar) (target : polyType) : typeKind
     =

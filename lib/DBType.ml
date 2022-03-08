@@ -8,6 +8,7 @@ type monoType =
   | Unit
   | Pair of monoType * monoType
   | Fun of monoType * monoType
+  | List of monoType
 
 and polyType = int * rhoType
 
@@ -15,6 +16,7 @@ and rhoType =
   | T of monoType
   | F of polyType * polyType
   | P of polyType * polyType
+  | L of polyType
 
 (** Kind of a type - monoType, rhoType, polyType *)
 type typeKind = Mono of monoType | Rho of rhoType | Poly of polyType
@@ -33,12 +35,14 @@ let rec monoTypeToString' var = function
       let inner = monoTypeToString' var m1 in
       (match m1 with Fun (_, _) -> "(" ^ inner ^ ")" | _ -> inner)
       ^ " -> " ^ monoTypeToString' var m2
+  | List m -> "[" ^ monoTypeToString' var m ^ "]list"
 
 and rhoToString' var = function
   | T m -> "R[" ^ monoTypeToString' var m ^ "]"
   | F (p1, p2) ->
       "R[" ^ polyToString' var p1 ^ "->" ^ polyToString' var p2 ^ "]"
   | P (p1, p2) -> "R[" ^ polyToString' var p1 ^ "," ^ polyToString' var p2 ^ "]"
+  | L p -> "R[" ^ polyToString' var p ^ "]"
 
 and polyToString' var ((a, r) : polyType) =
   "(" ^ string_of_int a ^ "," ^ rhoToString' var r ^ ")"
@@ -87,6 +91,11 @@ let rec normalize = function
       match (tk1, tk2) with
       | Mono m1, Mono m2 -> normalize (Mono (Pair (m1, m2)))
       | _ -> Rho (P (typeKindToPoly tk1, typeKindToPoly tk2)))
+  | Rho (L p) -> (
+      let tk = normalize (Poly p) in
+      match tk with
+      | Mono m -> normalize (Mono (List m))
+      | _ -> Rho (L (typeKindToPoly tk)))
   | Poly (0, r) -> normalize (Rho r)
   | Poly (a, r) -> Poly (a, typeKindToRho (normalize (Rho r)))
 
@@ -100,6 +109,7 @@ let isMonoType =
     | ForAll _ -> false
     | Pair (m1, m2) -> isMonoType' (isMonoType' acc m1) m2
     | Fun (m1, m2) -> isMonoType' (isMonoType' acc m1) m2
+    | List m -> isMonoType' acc m
     | _ -> acc
   in
   isMonoType' true
@@ -114,6 +124,7 @@ let rec monoTypeToDeBruijn' typeCtx (typeExpr : Type.monoType) : monoType =
       Pair (monoTypeToDeBruijn' typeCtx m1, monoTypeToDeBruijn' typeCtx m2)
   | Fun (m1, m2) ->
       Fun (monoTypeToDeBruijn' typeCtx m1, monoTypeToDeBruijn' typeCtx m2)
+  | List m -> List (monoTypeToDeBruijn' typeCtx m)
   | _ -> raise (DBTypeException "Not a monoType")
 
 and rhoTypeToDeBruijn' typeCtx (typeExpr : Type.monoType) : rhoType =
@@ -124,6 +135,7 @@ and rhoTypeToDeBruijn' typeCtx (typeExpr : Type.monoType) : rhoType =
         F (polyTypeToDeBruijn' typeCtx t1, polyTypeToDeBruijn' typeCtx t2)
     | Pair (t1, t2) ->
         P (polyTypeToDeBruijn' typeCtx t1, polyTypeToDeBruijn' typeCtx t2)
+    | List t -> L (polyTypeToDeBruijn' typeCtx t)
     | _ -> raise (DBTypeException "Not a rhoType")
 
 (** Converts a polyType into the deBruijn notation *)
@@ -166,12 +178,14 @@ let rec shiftMono (i : typeVar) (n : typeVar) = function
   | Var n' -> if n' >= n then Var (n' + i) else Var n'
   | Pair (m1, m2) -> Pair (shiftMono i n m1, shiftMono i n m2)
   | Fun (m1, m2) -> Fun (shiftMono i n m1, shiftMono i n m2)
+  | List m -> List (shiftMono i n m)
 
 (** Shifts rhoType variables by `i` *)
 and shiftRho (i : typeVar) (n : typeVar) = function
   | T m -> T (shiftMono i n m)
   | F (p1, p2) -> F (shiftPoly i n p1, shiftPoly i n p2)
   | P (p1, p2) -> P (shiftPoly i n p1, shiftPoly i n p2)
+  | L p -> L (shiftPoly i n p)
 
 (** Shifts polyType variables by `i` *)
 and shiftPoly (i : typeVar) (n : typeVar) = function
@@ -197,6 +211,7 @@ let rec substMono (typeKind : typeKind) (n : typeVar) (m : monoType) =
         (F
            ( typeKindToPoly (substMono typeKind n m1),
              typeKindToPoly (substMono typeKind n m2) ))
+  | List m -> Rho (L (typeKindToPoly (substMono typeKind n m)))
 
 (** Substitutes `monoType` under `Var n` inside a rhoType expression *)
 and substRho (typeKind : typeKind) (n : typeVar) (r : rhoType) =
@@ -212,6 +227,7 @@ and substRho (typeKind : typeKind) (n : typeVar) (r : rhoType) =
         (P
            ( typeKindToPoly (substPoly typeKind n p1),
              typeKindToPoly (substPoly typeKind n p2) ))
+  | L p -> Rho (L (typeKindToPoly (substPoly typeKind n p)))
 
 (** Substitutes `monoType` under `Var n` inside a polyType expression *)
 and substPoly (typeKind : typeKind) (n : typeVar) (p : polyType) =
@@ -240,3 +256,17 @@ let applyType (typeKind : typeKind) (tk : typeKind) =
   normalize p
 
 let incChar c = String.make 1 (Char.chr (c + Char.code 'a'))
+
+let getListType t =
+  let t = normalize t in
+  match t with
+  | Rho (L p) -> Poly p
+  | Mono (List m) -> Mono m
+  | _ -> failwith "not a list"
+
+let tkToList tk =
+  let tk = normalize tk in
+  match tk with
+  | Mono m -> Mono (List m)
+  | Rho r -> Rho (L (0, r))
+  | Poly p -> Rho (L p)

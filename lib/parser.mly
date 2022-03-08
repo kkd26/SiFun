@@ -2,7 +2,7 @@
 %token <string> VAR
 %token TRUE FALSE
 %token FST SND
-%token EOF LPAR RPAR COMMA SEMICOLON FUN ARRVAL
+%token EOF LPAR RPAR COMMA SEMICOLON FUN ARRVAL LBRA RBRA
 %token TINT TBOOL TUNIT TFORALL TARR DOT LCUR RCUR LAM COLON
 
 %type <Ast.expr list> block
@@ -48,7 +48,8 @@ basicExpr:
   | LPAR e = expr RPAR                             {e}
   | LPAR e1 = expr COMMA e2 = expr RPAR            {Ast.Pair(e1, e2)}
   | FST b = basicExpr                              {Ast.Fst(b)}
-  | SND b = basicExpr                              {Ast.Snd(b)} 
+  | SND b = basicExpr                              {Ast.Snd(b)}
+  | LBRA b = block RBRA                            {Ast.List(b)}
 
 appExpr:
   | e1 = typeAppExpr e2 = typeAppExpr              {Ast.App(e1, e2)}

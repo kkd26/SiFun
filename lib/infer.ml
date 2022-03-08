@@ -87,6 +87,16 @@ let rec inferType' check (ctx : typeCtx) (e : Debruijn.expr) :
       let a, r = typeKindToPoly t1 in
       returnNormalized (s1, Poly (a + 1, r))
   | Annot (_, t) -> returnNormalized (emptySubst, t)
+  | List e -> (
+      match e with
+      | [] -> returnNormalized (emptySubst, Rho (L (1, T (Var 0))))
+      | x :: xs ->
+          inferType' check ctx (List xs) >>= fun (s1, t1) ->
+          let t1 = getListType t1 in
+          inferType' check ctx x >>= fun (s2, t2) ->
+          unify [ (t1, t2) ] >>= fun s3 ->
+          let s = combineSubst s3 (combineSubst s2 s1) in
+          returnNormalized (s, applySubstToTypeKind s t2))
 
 let inferType (e : Debruijn.expr) : substitution * typeKind =
   let check (e : Debruijn.expr) =

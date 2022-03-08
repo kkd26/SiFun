@@ -15,6 +15,7 @@ type expr =
   | TypeApp of expr * DBType.typeKind
   | Lam of expr
   | Annot of expr * DBType.typeKind
+  | List of expr list
 
 exception DebruijnException of string
 
@@ -54,6 +55,7 @@ let toDeBruijn =
     | Annot (e, t) ->
         let tk = DBType.typeToDeBruijn typeCtx t in
         Annot (toDeBruijn' ctx typeCtx e, tk)
+    | List e -> List (List.map (toDeBruijn' ctx typeCtx) e)
   in
   toDeBruijn' (emptyEnv "Empty var env") (emptyEnv "Empty type env")
 
@@ -93,6 +95,10 @@ let exprToString =
         "("
         ^ exprToString' typeVar var e
         ^ ") : (" ^ DBType.typeKindToString t ^ ")"
+    | List e ->
+        "["
+        ^ List.fold_left (fun x b -> x ^ " " ^ exprToString' typeVar var b) "" e
+        ^ "]"
   in
   exprToString' 1 16
 

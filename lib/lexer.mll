@@ -41,6 +41,8 @@ rule read =
   | ')'           { RPAR }
   | '{'           { LCUR }
   | '}'           { RCUR }
+  | '['           { LBRA }
+  | ']'           { RBRA }
   | int           { INT (int_of_string (Lexing.lexeme lexbuf)) }
   | ident_reg_exp { VAR (Lexing.lexeme lexbuf) }
   | newline       { next_line lexbuf; read lexbuf }

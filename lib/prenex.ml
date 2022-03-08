@@ -21,7 +21,7 @@ let rec pr (tk : typeKind) : polyType =
             let p1 = shiftPoly a2 0 p1 in
             let p2 = (0, r2) in
             Poly (a2, P (p1, p2))
-        | T _ -> failwith "not possible")
+        | _ -> failwith "not possible")
     | Mono _ -> tk
   in
 
