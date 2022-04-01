@@ -5,4 +5,5 @@
  (modules parser))
 
 (library
- (name sifun))
+ (name sifun)
+ (instrumentation (backend bisect_ppx)))
