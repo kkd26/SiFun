@@ -10,11 +10,10 @@ let fromFile filename () =
     let astList = lexbufToExprList lexbuf in
     let dBAst = List.map toDeBruijn astList in
     let reduced = List.map Simple.reduceAll dBAst in
-    let infer = List.map Infer.inferTypeBD dBAst in
+    let infer = List.map Infer.inferTypeHMV dBAst in
     let typeAndReduced = List.combine infer reduced in
     List.iter
-      (fun ((sub, typ), reduced) ->
-        printSubst sub;
+      (fun ((_, typ), reduced) ->
         Printf.printf "- : %s | %s\n"
           (DBType.typeKindToString typ)
           (Debruijn.exprToString reduced))

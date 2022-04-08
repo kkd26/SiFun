@@ -37,14 +37,16 @@ let rec unifyMono (m1 : monoType) (m2 : monoType) : substitution IntState.t =
   match (m1, m2) with
   | Int, Int | Bool, Bool | Unit, Unit -> return emptySubst
   | Var n, Var m ->
-      if n = m then return emptySubst else raise (UnifyException "")
+      if n = m then return emptySubst
+      else raise (UnifyException "Cannot unify different type vars")
   | FreshVar n, FreshVar m ->
       if n = m then return emptySubst else return [ (n, Mono m2) ]
   | Fun (m3, m4), Fun (m5, m6) ->
       unify [ (Mono m3, Mono m5); (Mono m4, Mono m6) ]
   | Pair (m3, m4), Pair (m5, m6) ->
       unify [ (Mono m3, Mono m5); (Mono m4, Mono m6) ]
-      (* add rule FreshVar, Var -> error *)
+  | FreshVar _, Var _ | Var _, FreshVar _ ->
+      raise (UnifyException "Cannot unify freshvar with type var")
   | FreshVar n, t | t, FreshVar n -> (
       try
         inTypeMono n t;

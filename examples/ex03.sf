@@ -1,2 +1,3 @@
 ((fn x => (x 1, x true)) : (forall a. a->a) -> (int, bool)) (fn y => y);
 (fn x : forall a. a->a => (x 1, x true)) (fn y => y);
+[(fn y : forall a. a->a=> (y 1, y true)) (fn x => x); (1,false)]

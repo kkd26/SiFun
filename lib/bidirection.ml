@@ -92,9 +92,7 @@ let rec inferType' (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
           returnNormalized (emptySubst, Mono (List (FreshVar x)))
       | x :: xs ->
           inferType' ctx (List xs) >>= fun (s1, t1) ->
-          Utils.printTypeKind t1;
           let t1 = getListType t1 in
-          Utils.printTypeKind t1;
           inferType' ctx x >>= fun (s2, t2) ->
           unify [ (t1, t2) ] >>= fun s3 ->
           let s = combineSubst s3 (combineSubst s2 s1) in

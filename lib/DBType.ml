@@ -35,7 +35,7 @@ let rec monoTypeToString' var = function
       let inner = monoTypeToString' var m1 in
       (match m1 with Fun (_, _) -> "(" ^ inner ^ ")" | _ -> inner)
       ^ " -> " ^ monoTypeToString' var m2
-  | List m -> "[" ^ monoTypeToString' var m ^ "]list"
+  | List m -> monoTypeToString' var m ^ " list"
 
 and rhoToString' var = function
   | T m -> "R[" ^ monoTypeToString' var m ^ "]"
