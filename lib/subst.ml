@@ -1,5 +1,5 @@
 open DBType
-open TypeCtx
+open TermCtx
 
 type substitution = (typeVar * typeKind) list
 
@@ -52,7 +52,7 @@ let substitute (tk : typeKind) (v : typeVar) = function
 let applySubstToTypeKind (s : substitution) (t : typeKind) : typeKind =
   List.fold_right (fun (x, s) -> substitute s x) s t
 
-let applySubstToCtx s (ctx : typeCtx) : typeCtx =
+let applySubstToCtx s (ctx : termCtx) : termCtx =
   List.map (applySubstToTypeKind s) ctx
 
 let combineSubst (s1 : substitution) (s2 : substitution) : substitution =

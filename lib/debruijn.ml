@@ -27,35 +27,35 @@ let emptyEnv s var = raise (DebruijnException (emptyEnvErrorMessage s var))
 let update env x y = if y = x then 0 else 1 + env y
 
 let toDeBruijn =
-  let rec toDeBruijn' (ctx : Ast.var -> var) typeCtx : Ast.expr -> expr =
+  let rec toDeBruijn' (ctx : Ast.var -> var) termCtx : Ast.expr -> expr =
     function
     | Int i -> Int i
     | Var v -> Var (ctx v)
     | Bool b -> Bool b
     | Unit -> Unit
     | Pair (e1, e2) ->
-        Pair (toDeBruijn' ctx typeCtx e1, toDeBruijn' ctx typeCtx e2)
-    | Fst e -> Fst (toDeBruijn' ctx typeCtx e)
-    | Snd e -> Snd (toDeBruijn' ctx typeCtx e)
+        Pair (toDeBruijn' ctx termCtx e1, toDeBruijn' ctx termCtx e2)
+    | Fst e -> Fst (toDeBruijn' ctx termCtx e)
+    | Snd e -> Snd (toDeBruijn' ctx termCtx e)
     | Fun (v, e) ->
         let newCtx = update ctx v in
-        Fun (toDeBruijn' newCtx typeCtx e)
+        Fun (toDeBruijn' newCtx termCtx e)
     | App (e1, e2) ->
-        App (toDeBruijn' ctx typeCtx e1, toDeBruijn' ctx typeCtx e2)
+        App (toDeBruijn' ctx termCtx e1, toDeBruijn' ctx termCtx e2)
     | FunType (v, t, e) ->
         let newCtx = update ctx v in
-        let tk = DBType.typeToDeBruijn typeCtx t in
-        FunType (tk, toDeBruijn' newCtx typeCtx e)
+        let tk = DBType.typeToDeBruijn termCtx t in
+        FunType (tk, toDeBruijn' newCtx termCtx e)
     | TypeApp (e, t) ->
-        let tk = DBType.typeToDeBruijn typeCtx t in
-        TypeApp (toDeBruijn' ctx typeCtx e, tk)
+        let tk = DBType.typeToDeBruijn termCtx t in
+        TypeApp (toDeBruijn' ctx termCtx e, tk)
     | Lam (v, e) ->
-        let newTypeCtx = update typeCtx v in
-        Lam (toDeBruijn' ctx newTypeCtx e)
+        let newTermCtx = update termCtx v in
+        Lam (toDeBruijn' ctx newTermCtx e)
     | Annot (e, t) ->
-        let tk = DBType.typeToDeBruijn typeCtx t in
-        Annot (toDeBruijn' ctx typeCtx e, tk)
-    | List e -> List (List.map (toDeBruijn' ctx typeCtx) e)
+        let tk = DBType.typeToDeBruijn termCtx t in
+        Annot (toDeBruijn' ctx termCtx e, tk)
+    | List e -> List (List.map (toDeBruijn' ctx termCtx) e)
   in
   toDeBruijn' (emptyEnv "Empty var env") (emptyEnv "Empty type env")
 

@@ -2,7 +2,7 @@ open DBType
 open State
 open Unify
 open Subst
-open TypeCtx
+open TermCtx
 open Prenex
 open Deepskolem
 open Direction
@@ -11,7 +11,7 @@ let returnCombinedSubst s (sub, typ) =
   let open IntState in
   return (combineSubst sub s, normalize typ)
 
-let rec inferType' (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
+let rec inferType' (ctx : TermCtx.termCtx) (e : Debruijn.expr) =
   let open IntState in
   match e with
   | Int _ -> returnNormalized (emptySubst, Mono Int)
@@ -99,7 +99,7 @@ let rec inferType' (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
           let t = tkToList (applySubstToTypeKind s t1) in
           returnNormalized (s, t))
 
-and check' (tk : typeKind) (ctx : TypeCtx.typeCtx) (e : Debruijn.expr) =
+and check' (tk : typeKind) (ctx : TermCtx.termCtx) (e : Debruijn.expr) =
   let open IntState in
   match e with
   | Int _ -> unify [ (tk, Mono Int) ] >>= fun s -> returnNormalized (s, Mono Int)

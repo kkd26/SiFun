@@ -114,34 +114,34 @@ let isMonoType =
   in
   isMonoType' true
 
-let rec monoTypeToDeBruijn' typeCtx (typeExpr : Type.monoType) : monoType =
+let rec monoTypeToDeBruijn' termCtx (typeExpr : Type.monoType) : monoType =
   match typeExpr with
   | Int -> Int
-  | Var v -> Var (typeCtx v)
+  | Var v -> Var (termCtx v)
   | Bool -> Bool
   | Unit -> Unit
   | Pair (m1, m2) ->
-      Pair (monoTypeToDeBruijn' typeCtx m1, monoTypeToDeBruijn' typeCtx m2)
+      Pair (monoTypeToDeBruijn' termCtx m1, monoTypeToDeBruijn' termCtx m2)
   | Fun (m1, m2) ->
-      Fun (monoTypeToDeBruijn' typeCtx m1, monoTypeToDeBruijn' typeCtx m2)
-  | List m -> List (monoTypeToDeBruijn' typeCtx m)
+      Fun (monoTypeToDeBruijn' termCtx m1, monoTypeToDeBruijn' termCtx m2)
+  | List m -> List (monoTypeToDeBruijn' termCtx m)
   | _ -> raise (DBTypeException "Not a monoType")
 
-and rhoTypeToDeBruijn' typeCtx (typeExpr : Type.monoType) : rhoType =
-  if isMonoType typeExpr then T (monoTypeToDeBruijn' typeCtx typeExpr)
+and rhoTypeToDeBruijn' termCtx (typeExpr : Type.monoType) : rhoType =
+  if isMonoType typeExpr then T (monoTypeToDeBruijn' termCtx typeExpr)
   else
     match typeExpr with
     | Fun (t1, t2) ->
-        F (polyTypeToDeBruijn' typeCtx t1, polyTypeToDeBruijn' typeCtx t2)
+        F (polyTypeToDeBruijn' termCtx t1, polyTypeToDeBruijn' termCtx t2)
     | Pair (t1, t2) ->
-        P (polyTypeToDeBruijn' typeCtx t1, polyTypeToDeBruijn' typeCtx t2)
-    | List t -> L (polyTypeToDeBruijn' typeCtx t)
+        P (polyTypeToDeBruijn' termCtx t1, polyTypeToDeBruijn' termCtx t2)
+    | List t -> L (polyTypeToDeBruijn' termCtx t)
     | _ -> raise (DBTypeException "Not a rhoType")
 
 (** Converts a polyType into the deBruijn notation *)
-and polyTypeToDeBruijn' typeCtx : Type.monoType -> polyType = function
+and polyTypeToDeBruijn' termCtx : Type.monoType -> polyType = function
   | ForAll (v, t) ->
-      let newCtx = update typeCtx v in
+      let newCtx = update termCtx v in
       let a, r =
         match t with
         | ForAll _ -> polyTypeToDeBruijn' newCtx t
@@ -149,28 +149,28 @@ and polyTypeToDeBruijn' typeCtx : Type.monoType -> polyType = function
       in
       (a + 1, r)
   | t ->
-      let r = rhoTypeToDeBruijn' typeCtx t in
+      let r = rhoTypeToDeBruijn' termCtx t in
       (0, r)
 
 (** Converts a monoType into the deBruijn notation *)
-let monoTypeToDeBruijn typeCtx (typeExpr : Type.monoType) : typeKind =
-  Mono (monoTypeToDeBruijn' typeCtx typeExpr)
+let monoTypeToDeBruijn termCtx (typeExpr : Type.monoType) : typeKind =
+  Mono (monoTypeToDeBruijn' termCtx typeExpr)
 
 (** Converts a rhoType into the deBruijn notation *)
-let rhoTypeToDeBruijn typeCtx (typeExpr : Type.monoType) : typeKind =
-  Rho (rhoTypeToDeBruijn' typeCtx typeExpr)
+let rhoTypeToDeBruijn termCtx (typeExpr : Type.monoType) : typeKind =
+  Rho (rhoTypeToDeBruijn' termCtx typeExpr)
 
 (** Converts a polyType into the deBruijn notation *)
-let polyTypeToDeBruijn typeCtx (typeExpr : Type.monoType) : typeKind =
-  Poly (polyTypeToDeBruijn' typeCtx typeExpr)
+let polyTypeToDeBruijn termCtx (typeExpr : Type.monoType) : typeKind =
+  Poly (polyTypeToDeBruijn' termCtx typeExpr)
 
 (** Converts a type expression into the deBruijn notation *)
-let typeToDeBruijn typeCtx typeExpr : typeKind =
-  if isMonoType typeExpr then monoTypeToDeBruijn typeCtx typeExpr
+let typeToDeBruijn termCtx typeExpr : typeKind =
+  if isMonoType typeExpr then monoTypeToDeBruijn termCtx typeExpr
   else
     match typeExpr with
-    | ForAll _ -> polyTypeToDeBruijn typeCtx typeExpr
-    | _ -> rhoTypeToDeBruijn typeCtx typeExpr
+    | ForAll _ -> polyTypeToDeBruijn termCtx typeExpr
+    | _ -> rhoTypeToDeBruijn termCtx typeExpr
 
 (** Shifts monoType variables by `i` *)
 let rec shiftMono (i : typeVar) (n : typeVar) = function

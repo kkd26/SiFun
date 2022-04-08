@@ -2,7 +2,7 @@ open DBType
 open Subst
 open Unify
 open State
-open TypeCtx
+open TermCtx
 
 exception InferException of string
 
@@ -10,7 +10,7 @@ let returnNormalized (sub, typ) =
   let open IntState in
   return (sub, normalize typ)
 
-let rec inferType' check (ctx : typeCtx) (e : Debruijn.expr) :
+let rec inferType' check (ctx : termCtx) (e : Debruijn.expr) :
     (substitution * typeKind) IntState.t =
   let _ = check e in
   let open IntState in
