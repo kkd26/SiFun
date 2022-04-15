@@ -157,10 +157,7 @@ let firstAndApplication _ =
 let firstAndTypeApplication _ =
   (* ARRANGE *)
   let input : DBAst.expr = Fun (TypeApp (Fst (Var 0), Mono Int)) in
-  let expected =
-    Rho
-      (RhoFun ((0, RhoPair ((1, RhoMono (FreshVar 3)), (0, RhoMono (FreshVar 2)))), (0, RhoMono (FreshVar 3))))
-  in
+  let expected = Mono (Fun (Pair (FreshVar 1, FreshVar 2), FreshVar 1)) in
   (* ACT *)
   let output = snd (inferTypeBD input) in
   (* ASSERT *)
@@ -171,10 +168,7 @@ let firstAndTypeApplication2 _ =
   let input : DBAst.expr =
     Fun (TypeApp (TypeApp (Fst (Var 0), Mono Int), Mono Bool))
   in
-  let expected =
-    Rho
-      (RhoFun ((0, RhoPair ((2, RhoMono (FreshVar 4)), (0, RhoMono (FreshVar 2)))), (0, RhoMono (FreshVar 4))))
-  in
+  let expected = Mono (Fun (Pair (FreshVar 1, FreshVar 2), FreshVar 1)) in
   (* ACT *)
   let output = snd (inferTypeBD input) in
   (* ASSERT *)
@@ -309,7 +303,7 @@ let appVar0Var0 _ =
   assert_raises expected output
 
 let suite =
-  "TypeInferenceTest"
+  "BidirectionalInferenceTest"
   >::: [
          "inferFunction" >:: inferFunction;
          "inferInt1" >:: inferInt1;
