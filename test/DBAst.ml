@@ -1,6 +1,6 @@
 open Sifun
 open Ast
-open Debruijn
+open DBAst
 open OUnit2
 
 let toDeBruijnUnit _ =

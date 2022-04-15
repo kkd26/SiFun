@@ -17,12 +17,12 @@ type expr =
   | Annot of expr * DBType.typeKind
   | List of expr list
 
-exception DebruijnException of string
+exception DBAstException of string
 
 let emptyEnvErrorMessage msg var =
   Printf.sprintf "%s - unbound value %s" msg var
 
-let emptyEnv s var = raise (DebruijnException (emptyEnvErrorMessage s var))
+let emptyEnv s var = raise (DBAstException (emptyEnvErrorMessage s var))
 
 let update env x y = if y = x then 0 else 1 + env y
 

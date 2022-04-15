@@ -1,12 +1,12 @@
 open Sifun
-open Debruijn
+open DBAst
 open DBType
 open Infer
 open OUnit2
 
 let inferUnit _ =
   (* ARRANGE *)
-  let input : Debruijn.expr = Unit in
+  let input : DBAst.expr = Unit in
   let expected = Mono Unit in
   (* ACT *)
   let output = snd (inferType input) in
@@ -15,7 +15,7 @@ let inferUnit _ =
 
 let inferBool _ =
   (* ARRANGE *)
-  let input : Debruijn.expr = Bool true in
+  let input : DBAst.expr = Bool true in
   let expected = Mono Bool in
   (* ACT *)
   let output = snd (inferType input) in
@@ -24,7 +24,7 @@ let inferBool _ =
 
 let inferInt1 _ =
   (* ARRANGE *)
-  let input : Debruijn.expr = Int 1 in
+  let input : DBAst.expr = Int 1 in
   let expected = Mono Int in
   (* ACT *)
   let output = snd (inferType input) in
@@ -33,7 +33,7 @@ let inferInt1 _ =
 
 let inferPairInt1Int2 _ =
   (* ARRANGE *)
-  let input : Debruijn.expr = Pair (Int 1, Int 2) in
+  let input : DBAst.expr = Pair (Int 1, Int 2) in
   let expected = Mono (Pair (Int, Int)) in
   (* ACT *)
   let output = snd (inferType input) in
@@ -42,7 +42,7 @@ let inferPairInt1Int2 _ =
 
 let inferPairUnitBoolFalse _ =
   (* ARRANGE *)
-  let input : Debruijn.expr = Pair (Unit, Bool false) in
+  let input : DBAst.expr = Pair (Unit, Bool false) in
   let expected = Mono (Pair (Unit, Bool)) in
   (* ACT *)
   let output = snd (inferType input) in
@@ -51,7 +51,7 @@ let inferPairUnitBoolFalse _ =
 
 let inferFunction _ =
   (* ARRANGE *)
-  let input : Debruijn.expr = Fun (Var 0) in
+  let input : DBAst.expr = Fun (Var 0) in
   let expected = Mono (Fun (FreshVar 0, FreshVar 0)) in
   (* ACT *)
   let output = snd (inferType input) in
@@ -60,7 +60,7 @@ let inferFunction _ =
 
 let inferFirst _ =
   (* ARRANGE *)
-  let input : Debruijn.expr = Fst (Pair (Int 1, Int 2)) in
+  let input : DBAst.expr = Fst (Pair (Int 1, Int 2)) in
   let expected = Mono Int in
   (* ACT *)
   let output = snd (inferType input) in
@@ -69,7 +69,7 @@ let inferFirst _ =
 
 let inferSecond _ =
   (* ARRANGE *)
-  let input : Debruijn.expr = Snd (Pair (Bool true, Bool false)) in
+  let input : DBAst.expr = Snd (Pair (Bool true, Bool false)) in
   let expected = Mono Bool in
   (* ACT *)
   let output = snd (inferType input) in
@@ -78,7 +78,7 @@ let inferSecond _ =
 
 let inferNestedFunctions _ =
   (* ARRANGE *)
-  let input : Debruijn.expr = Fun (Fun (Fun (Var 0))) in
+  let input : DBAst.expr = Fun (Fun (Fun (Var 0))) in
   let expected =
     Mono (Fun (FreshVar 0, Fun (FreshVar 1, Fun (FreshVar 2, FreshVar 2))))
   in
@@ -89,7 +89,7 @@ let inferNestedFunctions _ =
 
 let inferNestedFunctionsWithApplication _ =
   (* ARRANGE *)
-  let input : Debruijn.expr = Fun (Fun (Fun (Fun (App (Var 0, Var 3))))) in
+  let input : DBAst.expr = Fun (Fun (Fun (Fun (App (Var 0, Var 3))))) in
   let expected =
     Mono
       (Fun
@@ -106,7 +106,7 @@ let inferNestedFunctionsWithApplication _ =
 
 let inferNestedFunctionsWithApplication2 _ =
   (* ARRANGE *)
-  let input : Debruijn.expr = Fun (Fun (Fun (App (Fun (Var 0), Var 2)))) in
+  let input : DBAst.expr = Fun (Fun (Fun (App (Fun (Var 0), Var 2)))) in
   let expected =
     Mono (Fun (FreshVar 3, Fun (FreshVar 1, Fun (FreshVar 2, FreshVar 3))))
   in
@@ -117,7 +117,7 @@ let inferNestedFunctionsWithApplication2 _ =
 
 let inferApplication _ =
   (* ARRANGE *)
-  let input : Debruijn.expr =
+  let input : DBAst.expr =
     Fun (Fun (Fun (App (App (Var 2, Var 1), Var 0))))
   in
   let expected =
@@ -133,7 +133,7 @@ let inferApplication _ =
 
 let inferExprInParenthesis _ =
   (* ARRANGE *)
-  let input : Debruijn.expr = App (Int 1, Int 2) in
+  let input : DBAst.expr = App (Int 1, Int 2) in
   let expected = Unify.UnifyException "Cannot unify int -> f0 and int" in
   (* ACT *)
   let output _ = snd (inferType input) in
@@ -142,7 +142,7 @@ let inferExprInParenthesis _ =
 
 let firstAndApplication _ =
   (* ARRANGE *)
-  let input : Debruijn.expr = Fun (Fun (App (Fst (Var 1), Var 0))) in
+  let input : DBAst.expr = Fun (Fun (App (Fst (Var 1), Var 0))) in
   let expected =
     Mono
       (Fun
@@ -156,7 +156,7 @@ let firstAndApplication _ =
 
 let firstAndTypeApplication _ =
   (* ARRANGE *)
-  let input : Debruijn.expr = Fun (TypeApp (Fst (Var 0), Mono Int)) in
+  let input : DBAst.expr = Fun (TypeApp (Fst (Var 0), Mono Int)) in
   let expected =
     Rho
       (F ((0, P ((1, T (FreshVar 3)), (0, T (FreshVar 2)))), (0, T (FreshVar 3))))
@@ -168,7 +168,7 @@ let firstAndTypeApplication _ =
 
 let firstAndTypeApplication2 _ =
   (* ARRANGE *)
-  let input : Debruijn.expr =
+  let input : DBAst.expr =
     Fun (TypeApp (TypeApp (Fst (Var 0), Mono Int), Mono Bool))
   in
   let expected =
@@ -182,7 +182,7 @@ let firstAndTypeApplication2 _ =
 
 let typedFunction _ =
   (* ARRANGE *)
-  let input : Debruijn.expr = FunType (Mono Int, Var 0) in
+  let input : DBAst.expr = FunType (Mono Int, Var 0) in
   let expected = Mono (Fun (Int, Int)) in
   (* ACT *)
   let output = snd (inferTypeHMV input) in
@@ -191,7 +191,7 @@ let typedFunction _ =
 
 let lambdaTypeAbstraction _ =
   (* ARRANGE *)
-  let input : Debruijn.expr = Lam (FunType (Mono (Var 0), Var 0)) in
+  let input : DBAst.expr = Lam (FunType (Mono (Var 0), Var 0)) in
   let expected = Poly (1, T (Fun (Var 0, Var 0))) in
   (* ACT *)
   let output = snd (inferTypeHMV input) in
@@ -200,7 +200,7 @@ let lambdaTypeAbstraction _ =
 
 let nestedLambdaTypeAbstraction _ =
   (* ARRANGE *)
-  let input : Debruijn.expr =
+  let input : DBAst.expr =
     Lam
       (Lam (Lam (FunType (Mono (Var 1), Fun (FunType (Mono (Var 2), Int 1))))))
   in
@@ -214,7 +214,7 @@ let nestedLambdaTypeAbstraction _ =
 
 let lambdaTypeWithForAll _ =
   (* ARRANGE *)
-  let input : Debruijn.expr =
+  let input : DBAst.expr =
     Lam (FunType (Poly (3, T (Fun (Var 2, Var 1))), Var 0))
   in
   let expected =
@@ -227,7 +227,7 @@ let lambdaTypeWithForAll _ =
 
 let nestedLambda _ =
   (* ARRANGE *)
-  let input : Debruijn.expr =
+  let input : DBAst.expr =
     Lam
       (Lam
          (Lam
@@ -243,7 +243,7 @@ let nestedLambda _ =
 
 let funPairTypedApp1True _ =
   (* ARRANGE *)
-  let input : Debruijn.expr =
+  let input : DBAst.expr =
     FunType
       ( Poly (1, T (Fun (Var 0, Var 0))),
         Pair
@@ -260,7 +260,7 @@ let funPairTypedApp1True _ =
 
 let appPairApp1TrueIdentity _ =
   (* ARRANGE *)
-  let input : Debruijn.expr =
+  let input : DBAst.expr =
     App
       ( FunType
           ( Poly (1, T (Fun (Var 0, Var 0))),

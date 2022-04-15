@@ -31,7 +31,7 @@ let printAst astList =
 
 (** Prints formatted AST after transforming it into the de Bruijn indices *)
 let printDBAst dBExprList =
-  let dBAstString = Debruijn.exprListToString dBExprList in
+  let dBAstString = DBAst.exprListToString dBExprList in
   Printf.printf "DeBruijn:\n%s\n" dBAstString
 
 let printTypeExpr typeExpr =

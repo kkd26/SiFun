@@ -14,7 +14,7 @@ let repl () =
        (* read and parse an ast from the input *)
        let exp = List.hd (Utils.lexbufToExprList lexbuf) in
        (* convert to debruijn *)
-       let debruijn = Debruijn.toDeBruijn exp in
+       let debruijn = DBAst.toDeBruijn exp in
        (* infer type *)
        let typ = snd (Infer.inferTypeHMV debruijn) in
        (* reduce expression *)
@@ -22,7 +22,7 @@ let repl () =
        (* print the result *)
        printf "- : %s | %s"
          (DBType.typeKindToString typ)
-         (Debruijn.exprToString reduced)
+         (DBAst.exprToString reduced)
      with e -> Exception.handleExceptions e);
     flush stdout
   done

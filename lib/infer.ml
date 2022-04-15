@@ -10,7 +10,7 @@ let returnNormalized (sub, typ) =
   let open IntState in
   return (sub, normalize typ)
 
-let rec inferType' check (ctx : termCtx) (e : Debruijn.expr) :
+let rec inferType' check (ctx : termCtx) (e : DBAst.expr) :
     (substitution * typeKind) IntState.t =
   let _ = check e in
   let open IntState in
@@ -98,8 +98,8 @@ let rec inferType' check (ctx : termCtx) (e : Debruijn.expr) :
           let s = combineSubst s3 (combineSubst s2 s1) in
           returnNormalized (s, applySubstToTypeKind s t2))
 
-let inferType (e : Debruijn.expr) : substitution * typeKind =
-  let check (e : Debruijn.expr) =
+let inferType (e : DBAst.expr) : substitution * typeKind =
+  let check (e : DBAst.expr) =
     match e with
     | TypeApp _ | FunType _ | Lam _ ->
         raise (InferException "Not supported in HM type system")
@@ -109,7 +109,7 @@ let inferType (e : Debruijn.expr) : substitution * typeKind =
   snd (runState (inferType' check emptyCtx e) ~init:0)
 
 let inferTypeHMV e =
-  let check (e : Debruijn.expr) = e in
+  let check (e : DBAst.expr) = e in
   let open IntState in
   snd (runState (inferType' check emptyCtx e) ~init:0)
 

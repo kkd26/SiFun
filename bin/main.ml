@@ -1,6 +1,6 @@
 open Sifun
 open Utils
-open Debruijn
+open DBAst
 
 let fromFile filename () =
   try
@@ -16,7 +16,7 @@ let fromFile filename () =
       (fun ((_, typ), reduced) ->
         Printf.printf "- : %s | %s\n"
           (DBType.typeKindToString typ)
-          (Debruijn.exprToString reduced))
+          (DBAst.exprToString reduced))
       typeAndReduced;
     Core.In_channel.close inx
   with e ->
