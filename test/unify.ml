@@ -34,7 +34,7 @@ let combinedTypes2 =
 
 let compareSubstitutions s1 s2 =
   List.for_all
-    (fun x -> applySubstToTypeKind s1 x = applySubstToTypeKind s2 x)
+    (fun x -> applySubstToTypeGenre s1 x = applySubstToTypeGenre s2 x)
     combinedTypes2
 
 let unifyHelper t1 t2 = snd (State.IntState.runState (unifyOne t1 t2) ~init:0)
@@ -109,7 +109,7 @@ let unifyForAllInt _ =
   (* ARRANGE *)
   let expected = substFromList [ Mono Int ] in
   (* ACT *)
-  let output = unifyHelper (Poly (1, T (Var 0))) (Poly (1, T Int)) in
+  let output = unifyHelper (Poly (1, RhoMono (Var 0))) (Poly (1, RhoMono Int)) in
   (* ASSERT *)
   assert_bool "Incorrect" (compareSubstitutions expected output)
 

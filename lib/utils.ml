@@ -38,16 +38,16 @@ let printTypeExpr typeExpr =
   let typeExprString = DBType.monoTypeToString typeExpr in
   Printf.printf "Type:\n%s\n" typeExprString
 
-let printTypeKind typeKind =
-  let typeKindString = DBType.typeKindToString typeKind in
-  Printf.printf "TypeKind:\n%s\n" typeKindString
+let printTypeGenre typeGenre =
+  let typeGenreString = DBType.typeGenreToString typeGenre in
+  Printf.printf "TypeGenre:\n%s\n" typeGenreString
 
 let printSubst subst = Printf.printf "%s\n" (Subst.substToString subst)
 
 let printCtx ctx =
   Printf.printf "[";
   let _ =
-    List.map (fun tk -> Printf.printf "%s, " (DBType.typeKindToString tk)) ctx
+    List.map (fun tk -> Printf.printf "%s, " (DBType.typeGenreToString tk)) ctx
   in
   ();
   Printf.printf "]\n"

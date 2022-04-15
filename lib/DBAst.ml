@@ -11,10 +11,10 @@ type expr =
   | Fun of expr
   | App of expr * expr
   (* Extended Language *)
-  | FunType of DBType.typeKind * expr
-  | TypeApp of expr * DBType.typeKind
+  | FunType of DBType.typeGenre * expr
+  | TypeApp of expr * DBType.typeGenre
   | Lam of expr
-  | Annot of expr * DBType.typeKind
+  | Annot of expr * DBType.typeGenre
   | List of expr list
 
 exception DBAstException of string
@@ -76,7 +76,7 @@ let exprToString =
     | Fun e ->
         "fn " ^ DBType.incChar var ^ " => " ^ exprToString' typeVar (var + 1) e
     | FunType (t, e) ->
-        "fn " ^ DBType.incChar var ^ " : " ^ DBType.typeKindToString t ^ " => "
+        "fn " ^ DBType.incChar var ^ " : " ^ DBType.typeGenreToString t ^ " => "
         ^ exprToString' typeVar (var + 1) e
     | App (e1, e2) ->
         "("
@@ -87,14 +87,14 @@ let exprToString =
     | TypeApp (e, t) ->
         "("
         ^ exprToString' typeVar var e
-        ^ ") {" ^ DBType.typeKindToString t ^ "}"
+        ^ ") {" ^ DBType.typeGenreToString t ^ "}"
     | Lam e ->
         "lam " ^ DBType.incChar typeVar ^ "."
         ^ exprToString' (typeVar + 1) var e
     | Annot (e, t) ->
         "("
         ^ exprToString' typeVar var e
-        ^ ") : (" ^ DBType.typeKindToString t ^ ")"
+        ^ ") : (" ^ DBType.typeGenreToString t ^ ")"
     | List e ->
         "["
         ^ List.fold_left (fun x b -> x ^ " " ^ exprToString' typeVar var b) "" e

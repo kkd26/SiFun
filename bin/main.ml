@@ -15,7 +15,7 @@ let fromFile filename () =
     List.iter
       (fun ((_, typ), reduced) ->
         Printf.printf "- : %s | %s\n"
-          (DBType.typeKindToString typ)
+          (DBType.typeGenreToString typ)
           (DBAst.exprToString reduced))
       typeAndReduced;
     Core.In_channel.close inx

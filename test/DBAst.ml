@@ -204,7 +204,7 @@ let lambdaTypeWithForAll _ =
             ForAll ("a", ForAll ("b", ForAll ("c", Fun (Var "a", Var "b")))),
             Var "x" ) )
   in
-  let expected = Lam (FunType (Poly (3, T (Fun (Var 2, Var 1))), Var 0)) in
+  let expected = Lam (FunType (Poly (3, RhoMono (Fun (Var 2, Var 1))), Var 0)) in
   (* ACT *)
   let output = toDeBruijn input in
   (* ASSERT *)

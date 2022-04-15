@@ -1,3 +1,3 @@
 open DBType
 
-type direction = Infer | Check of typeKind
+type direction = Infer | Check of typeGenre

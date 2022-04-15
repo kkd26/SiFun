@@ -21,7 +21,7 @@ let repl () =
        let reduced = Simple.reduceAll debruijn in
        (* print the result *)
        printf "- : %s | %s"
-         (DBType.typeKindToString typ)
+         (DBType.typeGenreToString typ)
          (DBAst.exprToString reduced)
      with e -> Exception.handleExceptions e);
     flush stdout

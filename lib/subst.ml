@@ -1,62 +1,62 @@
 open DBType
 open TermCtx
 
-type substitution = (typeVar * typeKind) list
+type substitution = (typeVar * typeGenre) list
 
 let emptySubst : substitution = []
 
-let rec substituteMono (tk : typeKind) (x : typeVar) (target : monoType) :
-    typeKind =
+let rec substituteMono (tk : typeGenre) (x : typeVar) (target : monoType) :
+    typeGenre =
   match target with
   | FreshVar y -> if x = y then tk else Mono target
   | Fun (m1, m2) ->
       Rho
-        (F
-           ( typeKindToPoly (substituteMono tk x m1),
-             typeKindToPoly (substituteMono tk x m2) ))
+        (RhoFun
+           ( typeGenreToPoly (substituteMono tk x m1),
+             typeGenreToPoly (substituteMono tk x m2) ))
   | Pair (m1, m2) ->
       Rho
-        (P
-           ( typeKindToPoly (substituteMono tk x m1),
-             typeKindToPoly (substituteMono tk x m2) ))
+        (RhoPair
+           ( typeGenreToPoly (substituteMono tk x m1),
+             typeGenreToPoly (substituteMono tk x m2) ))
   | t -> Mono t
 
-and substituteRho (tk : typeKind) (x : typeVar) (target : rhoType) : typeKind =
+and substituteRho (tk : typeGenre) (x : typeVar) (target : rhoType) : typeGenre =
   match target with
-  | T m -> substituteMono tk x m
-  | F (p1, p2) ->
+  | RhoMono m -> substituteMono tk x m
+  | RhoFun (p1, p2) ->
       Rho
-        (F
-           ( typeKindToPoly (substitutePoly tk x p1),
-             typeKindToPoly (substitutePoly tk x p2) ))
-  | P (p1, p2) ->
+        (RhoFun
+           ( typeGenreToPoly (substitutePoly tk x p1),
+             typeGenreToPoly (substitutePoly tk x p2) ))
+  | RhoPair (p1, p2) ->
       Rho
-        (P
-           ( typeKindToPoly (substitutePoly tk x p1),
-             typeKindToPoly (substitutePoly tk x p2) ))
-  | L p -> Rho (L (typeKindToPoly (substitutePoly tk x p)))
+        (RhoPair
+           ( typeGenreToPoly (substitutePoly tk x p1),
+             typeGenreToPoly (substitutePoly tk x p2) ))
+  | RhoList p -> Rho (RhoList (typeGenreToPoly (substitutePoly tk x p)))
 
-and substitutePoly (tk : typeKind) (x : typeVar) (target : polyType) : typeKind
+and substitutePoly (tk : typeGenre) (x : typeVar) (target : polyType) : typeGenre
     =
   let a, r = target in
   match substituteRho tk x r with
   | Poly (a', r') -> Poly (a + a', r')
   | Rho r -> Poly (a, r)
-  | Mono m -> Poly (a, T m)
+  | Mono m -> Poly (a, RhoMono m)
 
-let substitute (tk : typeKind) (v : typeVar) = function
+let substitute (tk : typeGenre) (v : typeVar) = function
   | Mono m -> normalize (substituteMono tk v m)
   | Rho r -> normalize (substituteRho tk v r)
   | Poly p -> normalize (substitutePoly tk v p)
 
-let applySubstToTypeKind (s : substitution) (t : typeKind) : typeKind =
+let applySubstToTypeGenre (s : substitution) (t : typeGenre) : typeGenre =
   List.fold_right (fun (x, s) -> substitute s x) s t
 
 let applySubstToCtx s (ctx : termCtx) : termCtx =
-  List.map (applySubstToTypeKind s) ctx
+  List.map (applySubstToTypeGenre s) ctx
 
 let combineSubst (s1 : substitution) (s2 : substitution) : substitution =
-  List.map (fun (x, t) -> (x, applySubstToTypeKind s1 t)) (s1 @ s2)
+  List.map (fun (x, t) -> (x, applySubstToTypeGenre s1 t)) (s1 @ s2)
 
 let combineSubstUnique (s1 : substitution) (s2 : substitution) : substitution =
   let _ =
@@ -77,6 +77,6 @@ let substFromList list : substitution =
 
 let substToString : substitution -> string =
   let elemToString a (x, t) =
-    a ^ string_of_int x ^ ":(" ^ typeKindToString t ^ ") "
+    a ^ string_of_int x ^ ":(" ^ typeGenreToString t ^ ") "
   in
   List.fold_left elemToString "e "

@@ -10,21 +10,21 @@ let returnNormalized (sub, typ) =
   return (sub, normalize typ)
 
 (** Deep skolemisation *)
-let rec dsk (tk : typeKind) (p' : polyType) =
+let rec dsk (tk : typeGenre) (p' : polyType) =
   let tk = normalize tk in
   let _, r = pr (Poly p') in
   dsk' tk r
 
-and dsk' (tk : typeKind) (r : rhoType) =
+and dsk' (tk : typeGenre) (r : rhoType) =
   let tk = normalize tk in
   let tk' = normalize (Rho r) in
   let open IntState in
   match (tk, tk') with
   | Mono t, Mono t' -> unifyMono t t' >>= fun s -> return s
-  | Rho (F (p1, p2)), Rho (F (p3, p4)) ->
+  | Rho (RhoFun (p1, p2)), Rho (RhoFun (p3, p4)) ->
       dsk (Poly p3) p1 >>= fun s1 ->
       dsk (Poly p2) p4 >>= fun s2 -> return (combineSubst s1 s2)
-  | Rho (P (p1, p2)), Rho (P (p3, p4)) ->
+  | Rho (RhoPair (p1, p2)), Rho (RhoPair (p3, p4)) ->
       dsk (Poly p1) p3 >>= fun s1 ->
       dsk (Poly p2) p4 >>= fun s2 -> return (combineSubst s1 s2)
   | Poly _, r' ->
@@ -33,14 +33,14 @@ and dsk' (tk : typeKind) (r : rhoType) =
   | _, _ -> failwith "skolem error"
 
 (** Instantiation, create fresh variables and remove type schema *)
-and inst (d : direction) (p : typeKind) : (substitution * typeKind) IntState.t =
+and inst (d : direction) (p : typeGenre) : (substitution * typeGenre) IntState.t =
   let open IntState in
   match d with
   | Infer -> (
-      let a, r = typeKindToPoly (normalize p) in
+      let a, r = typeGenreToPoly (normalize p) in
       match a with
       | 0 -> returnNormalized (emptySubst, Rho r)
       | _ -> freshName >>= fun x -> inst d (applyType (Mono (FreshVar x)) p))
   | Check tk ->
-      dsk p (typeKindToPoly tk) >>= fun s ->
-      returnNormalized (s, applySubstToTypeKind s p)
+      dsk p (typeGenreToPoly tk) >>= fun s ->
+      returnNormalized (s, applySubstToTypeGenre s p)

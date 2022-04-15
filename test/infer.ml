@@ -159,7 +159,7 @@ let firstAndTypeApplication _ =
   let input : DBAst.expr = Fun (TypeApp (Fst (Var 0), Mono Int)) in
   let expected =
     Rho
-      (F ((0, P ((1, T (FreshVar 3)), (0, T (FreshVar 2)))), (0, T (FreshVar 3))))
+      (RhoFun ((0, RhoPair ((1, RhoMono (FreshVar 3)), (0, RhoMono (FreshVar 2)))), (0, RhoMono (FreshVar 3))))
   in
   (* ACT *)
   let output = snd (inferTypeHMV input) in
@@ -173,7 +173,7 @@ let firstAndTypeApplication2 _ =
   in
   let expected =
     Rho
-      (F ((0, P ((2, T (FreshVar 4)), (0, T (FreshVar 2)))), (0, T (FreshVar 4))))
+      (RhoFun ((0, RhoPair ((2, RhoMono (FreshVar 4)), (0, RhoMono (FreshVar 2)))), (0, RhoMono (FreshVar 4))))
   in
   (* ACT *)
   let output = snd (inferTypeHMV input) in
@@ -192,7 +192,7 @@ let typedFunction _ =
 let lambdaTypeAbstraction _ =
   (* ARRANGE *)
   let input : DBAst.expr = Lam (FunType (Mono (Var 0), Var 0)) in
-  let expected = Poly (1, T (Fun (Var 0, Var 0))) in
+  let expected = Poly (1, RhoMono (Fun (Var 0, Var 0))) in
   (* ACT *)
   let output = snd (inferTypeHMV input) in
   (* ASSERT *)
@@ -205,7 +205,7 @@ let nestedLambdaTypeAbstraction _ =
       (Lam (Lam (FunType (Mono (Var 1), Fun (FunType (Mono (Var 2), Int 1))))))
   in
   let expected =
-    Poly (3, T (Fun (Var 1, Fun (FreshVar 0, Fun (Var 2, Int)))))
+    Poly (3, RhoMono (Fun (Var 1, Fun (FreshVar 0, Fun (Var 2, Int)))))
   in
   (* ACT *)
   let output = snd (inferTypeHMV input) in
@@ -215,10 +215,10 @@ let nestedLambdaTypeAbstraction _ =
 let lambdaTypeWithForAll _ =
   (* ARRANGE *)
   let input : DBAst.expr =
-    Lam (FunType (Poly (3, T (Fun (Var 2, Var 1))), Var 0))
+    Lam (FunType (Poly (3, RhoMono (Fun (Var 2, Var 1))), Var 0))
   in
   let expected =
-    Poly (1, F ((3, T (Fun (Var 2, Var 1))), (3, T (Fun (Var 2, Var 1)))))
+    Poly (1, RhoFun ((3, RhoMono (Fun (Var 2, Var 1))), (3, RhoMono (Fun (Var 2, Var 1)))))
   in
   (* ACT *)
   let output = snd (inferTypeHMV input) in
@@ -235,7 +235,7 @@ let nestedLambda _ =
                ( Mono (Var 2),
                  Lam (Lam (Lam (Lam (FunType (Mono (Var 3), Var 1))))) ))))
   in
-  let expected = Poly (3, F ((0, T (Var 2)), (4, T (Fun (Var 3, Var 6))))) in
+  let expected = Poly (3, RhoFun ((0, RhoMono (Var 2)), (4, RhoMono (Fun (Var 3, Var 6))))) in
   (* ACT *)
   let output = snd (inferTypeHMV input) in
   (* ASSERT *)
@@ -245,13 +245,13 @@ let funPairTypedApp1True _ =
   (* ARRANGE *)
   let input : DBAst.expr =
     FunType
-      ( Poly (1, T (Fun (Var 0, Var 0))),
+      ( Poly (1, RhoMono (Fun (Var 0, Var 0))),
         Pair
           ( App (TypeApp (Var 0, Mono Int), Int 1),
             App (TypeApp (Var 0, Mono Bool), Bool true) ) )
   in
   let expected =
-    Rho (F ((1, T (Fun (Var 0, Var 0))), (0, T (Pair (Int, Bool)))))
+    Rho (RhoFun ((1, RhoMono (Fun (Var 0, Var 0))), (0, RhoMono (Pair (Int, Bool)))))
   in
   (* ACT *)
   let output = snd (inferTypeHMV input) in
@@ -263,7 +263,7 @@ let appPairApp1TrueIdentity _ =
   let input : DBAst.expr =
     App
       ( FunType
-          ( Poly (1, T (Fun (Var 0, Var 0))),
+          ( Poly (1, RhoMono (Fun (Var 0, Var 0))),
             Pair
               ( App (TypeApp (Var 0, Mono Int), Int 1),
                 App (TypeApp (Var 0, Mono Bool), Bool true) ) ),

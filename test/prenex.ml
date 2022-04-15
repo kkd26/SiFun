@@ -6,7 +6,7 @@ open OUnit2
 let prenexInt _ =
   (* ARRANGE *)
   let input = Mono Int in
-  let expected = (0, T Int) in
+  let expected = (0, RhoMono Int) in
   (* ACT *)
   let output = pr input in
   (* ASSERT *)
@@ -15,7 +15,7 @@ let prenexInt _ =
 let prenexBool _ =
   (* ARRANGE *)
   let input = Mono Bool in
-  let expected = (0, T Bool) in
+  let expected = (0, RhoMono Bool) in
   (* ACT *)
   let output = pr input in
   (* ASSERT *)
@@ -24,7 +24,7 @@ let prenexBool _ =
 let prenexUnit _ =
   (* ARRANGE *)
   let input = Mono Unit in
-  let expected = (0, T Unit) in
+  let expected = (0, RhoMono Unit) in
   (* ACT *)
   let output = pr input in
   (* ASSERT *)
@@ -33,7 +33,7 @@ let prenexUnit _ =
 let prenexPair _ =
   (* ARRANGE *)
   let input = Mono (Pair (Int, Bool)) in
-  let expected = (0, T (Pair (Int, Bool))) in
+  let expected = (0, RhoMono (Pair (Int, Bool))) in
   (* ACT *)
   let output = pr input in
   (* ASSERT *)
@@ -42,7 +42,7 @@ let prenexPair _ =
 let prenexFun _ =
   (* ARRANGE *)
   let input = Mono (Fun (Int, Bool)) in
-  let expected = (0, T (Fun (Int, Bool))) in
+  let expected = (0, RhoMono (Fun (Int, Bool))) in
   (* ACT *)
   let output = pr input in
   (* ASSERT *)
@@ -51,8 +51,8 @@ let prenexFun _ =
 let prenexFunNotNormalized _ =
   (* ARRANGE *)
   let input = Mono (Fun (Int, Bool)) in
-  let expected = (0, F ((0, T Int), (0, T Bool))) in
-  let expectedNorm = typeKindToPoly (normalize (Poly expected)) in
+  let expected = (0, RhoFun ((0, RhoMono Int), (0, RhoMono Bool))) in
+  let expectedNorm = typeGenreToPoly (normalize (Poly expected)) in
   let expectedEx = OUnitTest.OUnit_failure "not equal" in
   (* ACT *)
   let output = pr input in
@@ -62,8 +62,8 @@ let prenexFunNotNormalized _ =
 
 let polyOnlyBoundedVariables _ =
   (* ARRANGE *)
-  let input = Poly (2, F ((1, T (Var 0)), (1, T (Fun (Var 1, Var 0))))) in
-  let expected = (3, F ((1, T (Var 0)), (0, T (Fun (Var 1, Var 0))))) in
+  let input = Poly (2, RhoFun ((1, RhoMono (Var 0)), (1, RhoMono (Fun (Var 1, Var 0))))) in
+  let expected = (3, RhoFun ((1, RhoMono (Var 0)), (0, RhoMono (Fun (Var 1, Var 0))))) in
   (* ACT *)
   let output = pr input in
   (* ASSERT *)
@@ -71,8 +71,8 @@ let polyOnlyBoundedVariables _ =
 
 let polyMonoTypeFun _ =
   (* ARRANGE *)
-  let input = Poly (2, T (Fun (Var 1, Fun (Var 0, Var 0)))) in
-  let expected = (2, T (Fun (Var 1, Fun (Var 0, Var 0)))) in
+  let input = Poly (2, RhoMono (Fun (Var 1, Fun (Var 0, Var 0)))) in
+  let expected = (2, RhoMono (Fun (Var 1, Fun (Var 0, Var 0)))) in
   (* ACT *)
   let output = pr input in
   (* ASSERT *)
@@ -80,8 +80,8 @@ let polyMonoTypeFun _ =
 
 let polyOneUnboundedVariable _ =
   (* ARRANGE *)
-  let input = Poly (2, F ((1, T (Var 1)), (1, T (Fun (Var 1, Var 0))))) in
-  let expected = (3, F ((1, T (Var 2)), (0, T (Fun (Var 1, Var 0))))) in
+  let input = Poly (2, RhoFun ((1, RhoMono (Var 1)), (1, RhoMono (Fun (Var 1, Var 0))))) in
+  let expected = (3, RhoFun ((1, RhoMono (Var 2)), (0, RhoMono (Fun (Var 1, Var 0))))) in
   (* ACT *)
   let output = pr input in
   (* ASSERT *)
@@ -89,8 +89,8 @@ let polyOneUnboundedVariable _ =
 
 let polyNestedFunctions _ =
   (* ARRANGE *)
-  let input = Poly (1, F ((0, T (Var 0)), (1, T (Fun (Var 0, Var 0))))) in
-  let expected = (2, T (Fun (Var 1, Fun (Var 0, Var 0)))) in
+  let input = Poly (1, RhoFun ((0, RhoMono (Var 0)), (1, RhoMono (Fun (Var 0, Var 0))))) in
+  let expected = (2, RhoMono (Fun (Var 1, Fun (Var 0, Var 0)))) in
   (* ACT *)
   let output = pr input in
   (* ASSERT *)

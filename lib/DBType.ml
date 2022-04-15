@@ -13,13 +13,13 @@ type monoType =
 and polyType = int * rhoType
 
 and rhoType =
-  | T of monoType
-  | F of polyType * polyType
-  | P of polyType * polyType
-  | L of polyType
+  | RhoMono of monoType
+  | RhoFun of polyType * polyType
+  | RhoPair of polyType * polyType
+  | RhoList of polyType
 
-(** Kind of a type - monoType, rhoType, polyType *)
-type typeKind = Mono of monoType | Rho of rhoType | Poly of polyType
+(** Genre of a type - monoType, rhoType, polyType *)
+type typeGenre = Mono of monoType | Rho of rhoType | Poly of polyType
 
 exception DBTypeException of string
 
@@ -38,11 +38,11 @@ let rec monoTypeToString' var = function
   | List m -> monoTypeToString' var m ^ " list"
 
 and rhoToString' var = function
-  | T m -> "R[" ^ monoTypeToString' var m ^ "]"
-  | F (p1, p2) ->
+  | RhoMono m -> "R[" ^ monoTypeToString' var m ^ "]"
+  | RhoFun (p1, p2) ->
       "R[" ^ polyToString' var p1 ^ "->" ^ polyToString' var p2 ^ "]"
-  | P (p1, p2) -> "R[" ^ polyToString' var p1 ^ "," ^ polyToString' var p2 ^ "]"
-  | L p -> "R[" ^ polyToString' var p ^ "]"
+  | RhoPair (p1, p2) -> "R[" ^ polyToString' var p1 ^ "," ^ polyToString' var p2 ^ "]"
+  | RhoList p -> "R[" ^ polyToString' var p ^ "]"
 
 and polyToString' var ((a, r) : polyType) =
   "(" ^ string_of_int a ^ "," ^ rhoToString' var r ^ ")"
@@ -53,51 +53,51 @@ let rhoToString = rhoToString' 1
 
 let polyToString = polyToString' 1
 
-let typeKindToString = function
+let typeGenreToString = function
   | Mono m -> monoTypeToString m
   | Rho r -> rhoToString r
   | Poly p -> polyToString p
 
-let typeKindToMono = function
+let typeGenreToMono = function
   | Mono m -> m
-  | Rho (T m) -> m
-  | Poly (0, T m) -> m
+  | Rho (RhoMono m) -> m
+  | Poly (0, RhoMono m) -> m
   | tk ->
       raise
         (DBTypeException
-           ("Conversion tk to mono not possible " ^ typeKindToString tk))
+           ("Conversion tk to mono not possible " ^ typeGenreToString tk))
 
-let typeKindToRho = function
-  | Mono m -> T m
+let typeGenreToRho = function
+  | Mono m -> RhoMono m
   | Rho r -> r
   | Poly (0, r) -> r
   | _ -> raise (DBTypeException "Conversion tk to rho not possible")
 
-let typeKindToPoly = function Poly p -> p | t -> (0, typeKindToRho t)
+let typeGenreToPoly = function Poly p -> p | t -> (0, typeGenreToRho t)
 
-(** Return normalized (simplified) typeKind *)
+(** Return normalized (simplified) typeGenre *)
 let rec normalize = function
   | Mono m -> Mono m
-  | Rho (T m) -> Mono m
-  | Rho (F (p1, p2)) -> (
+  | Rho (RhoMono m) -> Mono m
+  | Rho (RhoFun (p1, p2)) -> (
       let tk1 = normalize (Poly p1) in
       let tk2 = normalize (Poly p2) in
       match (tk1, tk2) with
       | Mono m1, Mono m2 -> normalize (Mono (Fun (m1, m2)))
-      | _ -> Rho (F (typeKindToPoly tk1, typeKindToPoly tk2)))
-  | Rho (P (p1, p2)) -> (
+      | _ -> Rho (RhoFun (typeGenreToPoly tk1, typeGenreToPoly tk2)))
+  | Rho (RhoPair (p1, p2)) -> (
       let tk1 = normalize (Poly p1) in
       let tk2 = normalize (Poly p2) in
       match (tk1, tk2) with
       | Mono m1, Mono m2 -> normalize (Mono (Pair (m1, m2)))
-      | _ -> Rho (P (typeKindToPoly tk1, typeKindToPoly tk2)))
-  | Rho (L p) -> (
+      | _ -> Rho (RhoPair (typeGenreToPoly tk1, typeGenreToPoly tk2)))
+  | Rho (RhoList p) -> (
       let tk = normalize (Poly p) in
       match tk with
       | Mono m -> normalize (Mono (List m))
-      | _ -> Rho (L (typeKindToPoly tk)))
+      | _ -> Rho (RhoList (typeGenreToPoly tk)))
   | Poly (0, r) -> normalize (Rho r)
-  | Poly (a, r) -> Poly (a, typeKindToRho (normalize (Rho r)))
+  | Poly (a, r) -> Poly (a, typeGenreToRho (normalize (Rho r)))
 
 (** Updates current environment `env` and returns a new one *)
 let update env newVal queryVal =
@@ -128,14 +128,14 @@ let rec monoTypeToDeBruijn' termCtx (typeExpr : Type.monoType) : monoType =
   | _ -> raise (DBTypeException "Not a monoType")
 
 and rhoTypeToDeBruijn' termCtx (typeExpr : Type.monoType) : rhoType =
-  if isMonoType typeExpr then T (monoTypeToDeBruijn' termCtx typeExpr)
+  if isMonoType typeExpr then RhoMono (monoTypeToDeBruijn' termCtx typeExpr)
   else
     match typeExpr with
     | Fun (t1, t2) ->
-        F (polyTypeToDeBruijn' termCtx t1, polyTypeToDeBruijn' termCtx t2)
+        RhoFun (polyTypeToDeBruijn' termCtx t1, polyTypeToDeBruijn' termCtx t2)
     | Pair (t1, t2) ->
-        P (polyTypeToDeBruijn' termCtx t1, polyTypeToDeBruijn' termCtx t2)
-    | List t -> L (polyTypeToDeBruijn' termCtx t)
+        RhoPair (polyTypeToDeBruijn' termCtx t1, polyTypeToDeBruijn' termCtx t2)
+    | List t -> RhoList (polyTypeToDeBruijn' termCtx t)
     | _ -> raise (DBTypeException "Not a rhoType")
 
 (** Converts a polyType into the deBruijn notation *)
@@ -153,19 +153,19 @@ and polyTypeToDeBruijn' termCtx : Type.monoType -> polyType = function
       (0, r)
 
 (** Converts a monoType into the deBruijn notation *)
-let monoTypeToDeBruijn termCtx (typeExpr : Type.monoType) : typeKind =
+let monoTypeToDeBruijn termCtx (typeExpr : Type.monoType) : typeGenre =
   Mono (monoTypeToDeBruijn' termCtx typeExpr)
 
 (** Converts a rhoType into the deBruijn notation *)
-let rhoTypeToDeBruijn termCtx (typeExpr : Type.monoType) : typeKind =
+let rhoTypeToDeBruijn termCtx (typeExpr : Type.monoType) : typeGenre =
   Rho (rhoTypeToDeBruijn' termCtx typeExpr)
 
 (** Converts a polyType into the deBruijn notation *)
-let polyTypeToDeBruijn termCtx (typeExpr : Type.monoType) : typeKind =
+let polyTypeToDeBruijn termCtx (typeExpr : Type.monoType) : typeGenre =
   Poly (polyTypeToDeBruijn' termCtx typeExpr)
 
 (** Converts a type expression into the deBruijn notation *)
-let typeToDeBruijn termCtx typeExpr : typeKind =
+let typeToDeBruijn termCtx typeExpr : typeGenre =
   if isMonoType typeExpr then monoTypeToDeBruijn termCtx typeExpr
   else
     match typeExpr with
@@ -182,10 +182,10 @@ let rec shiftMono (i : typeVar) (n : typeVar) = function
 
 (** Shifts rhoType variables by `i` *)
 and shiftRho (i : typeVar) (n : typeVar) = function
-  | T m -> T (shiftMono i n m)
-  | F (p1, p2) -> F (shiftPoly i n p1, shiftPoly i n p2)
-  | P (p1, p2) -> P (shiftPoly i n p1, shiftPoly i n p2)
-  | L p -> L (shiftPoly i n p)
+  | RhoMono m -> RhoMono (shiftMono i n m)
+  | RhoFun (p1, p2) -> RhoFun (shiftPoly i n p1, shiftPoly i n p2)
+  | RhoPair (p1, p2) -> RhoPair (shiftPoly i n p1, shiftPoly i n p2)
+  | RhoList p -> RhoList (shiftPoly i n p)
 
 (** Shifts polyType variables by `i` *)
 and shiftPoly (i : typeVar) (n : typeVar) = function
@@ -197,61 +197,61 @@ let shiftType (i : typeVar) (n : typeVar) = function
   | Poly p -> Poly (shiftPoly i n p)
 
 (** Substitutes `monoType` under `Var n` inside a monoType expression *)
-let rec substMono (typeKind : typeKind) (n : typeVar) (m : monoType) =
+let rec substMono (typeGenre : typeGenre) (n : typeVar) (m : monoType) =
   match m with
   | (Int | Bool | Unit | FreshVar _) as monoType -> Mono monoType
-  | Var n' -> if n = n' then typeKind else Mono m
+  | Var n' -> if n = n' then typeGenre else Mono m
   | Pair (m1, m2) ->
       Rho
-        (P
-           ( typeKindToPoly (substMono typeKind n m1),
-             typeKindToPoly (substMono typeKind n m2) ))
+        (RhoPair
+           ( typeGenreToPoly (substMono typeGenre n m1),
+             typeGenreToPoly (substMono typeGenre n m2) ))
   | Fun (m1, m2) ->
       Rho
-        (F
-           ( typeKindToPoly (substMono typeKind n m1),
-             typeKindToPoly (substMono typeKind n m2) ))
-  | List m -> Rho (L (typeKindToPoly (substMono typeKind n m)))
+        (RhoFun
+           ( typeGenreToPoly (substMono typeGenre n m1),
+             typeGenreToPoly (substMono typeGenre n m2) ))
+  | List m -> Rho (RhoList (typeGenreToPoly (substMono typeGenre n m)))
 
 (** Substitutes `monoType` under `Var n` inside a rhoType expression *)
-and substRho (typeKind : typeKind) (n : typeVar) (r : rhoType) =
+and substRho (typeGenre : typeGenre) (n : typeVar) (r : rhoType) =
   match r with
-  | T m1 -> substMono typeKind n m1
-  | F (p1, p2) ->
+  | RhoMono m1 -> substMono typeGenre n m1
+  | RhoFun (p1, p2) ->
       Rho
-        (F
-           ( typeKindToPoly (substPoly typeKind n p1),
-             typeKindToPoly (substPoly typeKind n p2) ))
-  | P (p1, p2) ->
+        (RhoFun
+           ( typeGenreToPoly (substPoly typeGenre n p1),
+             typeGenreToPoly (substPoly typeGenre n p2) ))
+  | RhoPair (p1, p2) ->
       Rho
-        (P
-           ( typeKindToPoly (substPoly typeKind n p1),
-             typeKindToPoly (substPoly typeKind n p2) ))
-  | L p -> Rho (L (typeKindToPoly (substPoly typeKind n p)))
+        (RhoPair
+           ( typeGenreToPoly (substPoly typeGenre n p1),
+             typeGenreToPoly (substPoly typeGenre n p2) ))
+  | RhoList p -> Rho (RhoList (typeGenreToPoly (substPoly typeGenre n p)))
 
 (** Substitutes `monoType` under `Var n` inside a polyType expression *)
-and substPoly (typeKind : typeKind) (n : typeVar) (p : polyType) =
+and substPoly (typeGenre : typeGenre) (n : typeVar) (p : polyType) =
   let a, r = p in
-  match substRho (shiftType a 0 typeKind) (n + a) r with
+  match substRho (shiftType a 0 typeGenre) (n + a) r with
   | Poly (a', r') -> Poly (a + a', r')
   | Rho r -> Poly (a, r)
-  | Mono m -> Poly (a, T m)
+  | Mono m -> Poly (a, RhoMono m)
 
 (** Substitutes `monoType` under `Var n` inside a type expression *)
-let substType (typeKind : typeKind) (n : typeVar) = function
-  | Mono m -> normalize (substMono typeKind n m)
-  | Rho r -> normalize (substRho typeKind n r)
-  | Poly p -> normalize (substPoly typeKind n p)
+let substType (typeGenre : typeGenre) (n : typeVar) = function
+  | Mono m -> normalize (substMono typeGenre n m)
+  | Rho r -> normalize (substRho typeGenre n r)
+  | Poly p -> normalize (substPoly typeGenre n p)
 
-let applyType (typeKind : typeKind) (tk : typeKind) =
-  let p = typeKindToPoly tk in
+let applyType (typeGenre : typeGenre) (tk : typeGenre) =
+  let p = typeGenreToPoly tk in
   let a, r = p in
   let p =
     match a with
     | 0 -> Poly p
     | a ->
         Poly
-          (a - 1, typeKindToRho (shiftType (-1) a (substRho typeKind (a - 1) r)))
+          (a - 1, typeGenreToRho (shiftType (-1) a (substRho typeGenre (a - 1) r)))
   in
   normalize p
 
@@ -260,13 +260,13 @@ let incChar c = String.make 1 (Char.chr (c + Char.code 'a'))
 let getListType t =
   let t = normalize t in
   match t with
-  | Rho (L p) -> Poly p
+  | Rho (RhoList p) -> Poly p
   | Mono (List m) -> Mono m
   | _ -> failwith "not a list"
 
-let tkToList tk =
+let typeGenreToList tk =
   let tk = normalize tk in
   match tk with
   | Mono m -> Mono (List m)
-  | Rho r -> Rho (L (0, r))
-  | Poly p -> Rho (L p)
+  | Rho r -> Rho (RhoList (0, r))
+  | Poly p -> Rho (RhoList p)
