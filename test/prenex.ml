@@ -62,8 +62,12 @@ let prenexFunNotNormalized _ =
 
 let polyOnlyBoundedVariables _ =
   (* ARRANGE *)
-  let input = Poly (2, RhoFun ((1, RhoMono (Var 0)), (1, RhoMono (Fun (Var 1, Var 0))))) in
-  let expected = (3, RhoFun ((1, RhoMono (Var 0)), (0, RhoMono (Fun (Var 1, Var 0))))) in
+  let input =
+    Poly (2, RhoFun ((1, RhoMono (Var 0)), (1, RhoMono (Fun (Var 1, Var 0)))))
+  in
+  let expected =
+    (3, RhoFun ((1, RhoMono (Var 0)), (0, RhoMono (Fun (Var 1, Var 0)))))
+  in
   (* ACT *)
   let output = pr input in
   (* ASSERT *)
@@ -80,8 +84,12 @@ let polyMonoTypeFun _ =
 
 let polyOneUnboundedVariable _ =
   (* ARRANGE *)
-  let input = Poly (2, RhoFun ((1, RhoMono (Var 1)), (1, RhoMono (Fun (Var 1, Var 0))))) in
-  let expected = (3, RhoFun ((1, RhoMono (Var 2)), (0, RhoMono (Fun (Var 1, Var 0))))) in
+  let input =
+    Poly (2, RhoFun ((1, RhoMono (Var 1)), (1, RhoMono (Fun (Var 1, Var 0)))))
+  in
+  let expected =
+    (3, RhoFun ((1, RhoMono (Var 2)), (0, RhoMono (Fun (Var 1, Var 0)))))
+  in
   (* ACT *)
   let output = pr input in
   (* ASSERT *)
@@ -89,8 +97,58 @@ let polyOneUnboundedVariable _ =
 
 let polyNestedFunctions _ =
   (* ARRANGE *)
-  let input = Poly (1, RhoFun ((0, RhoMono (Var 0)), (1, RhoMono (Fun (Var 0, Var 0))))) in
+  let input =
+    Poly (1, RhoFun ((0, RhoMono (Var 0)), (1, RhoMono (Fun (Var 0, Var 0)))))
+  in
   let expected = (2, RhoMono (Fun (Var 1, Fun (Var 0, Var 0)))) in
+  (* ACT *)
+  let output = pr input in
+  (* ASSERT *)
+  assert_equal output expected
+
+let rhoPair _ =
+  (* ARRANGE *)
+  let input =
+    Poly (1, RhoPair ((3, RhoMono (Var 2)), (1, RhoMono (Pair (Var 0, Var 0)))))
+  in
+  let expected =
+    (2, RhoPair ((3, RhoMono (Var 2)), (0, RhoMono (Pair (Var 0, Var 0)))))
+  in
+  (* ACT *)
+  let output = pr input in
+  (* ASSERT *)
+  assert_equal output expected
+
+let rhoPair2 _ =
+  (* ARRANGE *)
+  let input =
+    Poly (1, RhoPair ((3, RhoMono (Var 3)), (1, RhoMono (Pair (Var 0, Var 0)))))
+  in
+  let expected =
+    (2, RhoPair ((3, RhoMono (Var 4)), (0, RhoMono (Pair (Var 0, Var 0)))))
+  in
+  (* ACT *)
+  let output = pr input in
+  (* ASSERT *)
+  assert_equal output expected
+
+let rhoPair3 _ =
+  (* ARRANGE *)
+  let input =
+    Poly (1, RhoPair ((3, RhoMono (Var 3)), (10, RhoMono (Pair (Var 0, Var 0)))))
+  in
+  let expected =
+    (11, RhoPair ((3, RhoMono (Var 13)), (0, RhoMono (Pair (Var 0, Var 0)))))
+  in
+  (* ACT *)
+  let output = pr input in
+  (* ASSERT *)
+  assert_equal output expected
+
+let monoException _ =
+  (* ARRANGE *)
+  let input = Poly (0, RhoMono Int) in
+  let expected = (0, RhoMono Int) in
   (* ACT *)
   let output = pr input in
   (* ASSERT *)
@@ -109,6 +167,10 @@ let suite =
          "polyMonoTypeFun" >:: polyMonoTypeFun;
          "polyOneUnboundedVariable" >:: polyOneUnboundedVariable;
          "polyNestedFunctions" >:: polyNestedFunctions;
+         "rhoPair" >:: rhoPair;
+         "rhoPair2" >:: rhoPair2;
+         "rhoPair3" >:: rhoPair3;
+         "monoException" >:: monoException;
        ]
 
 let () = run_test_tt_main suite
