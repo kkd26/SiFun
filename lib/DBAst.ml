@@ -22,40 +22,42 @@ exception DBAstException of string
 let emptyEnvErrorMessage msg var =
   Printf.sprintf "%s - unbound value %s" msg var
 
-let emptyEnv s var = raise (DBAstException (emptyEnvErrorMessage s var))
+let emptyEnv msg varName =
+  raise (DBAstException (emptyEnvErrorMessage msg varName))
 
-let update env x y = if y = x then 0 else 1 + env y
+let update env varName lookupVar =
+  if lookupVar = varName then 0 else 1 + env lookupVar
 
 let toDeBruijn =
-  let rec toDeBruijn' (ctx : Ast.var -> var) termCtx : Ast.expr -> expr =
+  let rec toDeBruijn' (env : Ast.var -> var) termEnv : Ast.expr -> expr =
     function
     | Int i -> Int i
-    | Var v -> Var (ctx v)
+    | Var v -> Var (env v)
     | Bool b -> Bool b
     | Unit -> Unit
     | Pair (e1, e2) ->
-        Pair (toDeBruijn' ctx termCtx e1, toDeBruijn' ctx termCtx e2)
-    | Fst e -> Fst (toDeBruijn' ctx termCtx e)
-    | Snd e -> Snd (toDeBruijn' ctx termCtx e)
+        Pair (toDeBruijn' env termEnv e1, toDeBruijn' env termEnv e2)
+    | Fst e -> Fst (toDeBruijn' env termEnv e)
+    | Snd e -> Snd (toDeBruijn' env termEnv e)
     | Fun (v, e) ->
-        let newCtx = update ctx v in
-        Fun (toDeBruijn' newCtx termCtx e)
+        let newEnv = update env v in
+        Fun (toDeBruijn' newEnv termEnv e)
     | App (e1, e2) ->
-        App (toDeBruijn' ctx termCtx e1, toDeBruijn' ctx termCtx e2)
+        App (toDeBruijn' env termEnv e1, toDeBruijn' env termEnv e2)
     | FunType (v, t, e) ->
-        let newCtx = update ctx v in
-        let tk = DBType.typeToDeBruijn termCtx t in
-        FunType (tk, toDeBruijn' newCtx termCtx e)
+        let newEnv = update env v in
+        let tk = DBType.typeToDeBruijn termEnv t in
+        FunType (tk, toDeBruijn' newEnv termEnv e)
     | TypeApp (e, t) ->
-        let tk = DBType.typeToDeBruijn termCtx t in
-        TypeApp (toDeBruijn' ctx termCtx e, tk)
+        let tk = DBType.typeToDeBruijn termEnv t in
+        TypeApp (toDeBruijn' env termEnv e, tk)
     | Lam (v, e) ->
-        let newTermCtx = update termCtx v in
-        Lam (toDeBruijn' ctx newTermCtx e)
+        let newTermEnv = update termEnv v in
+        Lam (toDeBruijn' env newTermEnv e)
     | Annot (e, t) ->
-        let tk = DBType.typeToDeBruijn termCtx t in
-        Annot (toDeBruijn' ctx termCtx e, tk)
-    | List e -> List (List.map (toDeBruijn' ctx termCtx) e)
+        let tk = DBType.typeToDeBruijn termEnv t in
+        Annot (toDeBruijn' env termEnv e, tk)
+    | List e -> List (List.map (toDeBruijn' env termEnv) e)
   in
   toDeBruijn' (emptyEnv "Empty var env") (emptyEnv "Empty type env")
 
