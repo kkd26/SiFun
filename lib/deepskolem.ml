@@ -20,7 +20,7 @@ and dsk' (tk : typeGenre) (r : rhoType) =
   let tk' = normalize (Rho r) in
   let open IntState in
   match (tk, tk') with
-  | Mono t, Mono t' -> unifyMono t t' >>= fun s -> return s
+  | Mono t, Mono t' -> unifyMono t t'
   | Rho (RhoFun (p1, p2)), Rho (RhoFun (p3, p4)) ->
       dsk (Poly p3) p1 >>= fun s1 ->
       dsk (Poly p2) p4 >>= fun s2 -> return (combineSubst s1 s2)
