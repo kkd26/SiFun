@@ -7,7 +7,7 @@ let rec shift i c = function
   | Unit -> Unit
   | Pair (e1, e2) -> Pair (shift i c e1, shift i c e2)
   | Fst e -> Fst (shift i c e)
-  | Snd e -> Fst (shift i c e)
+  | Snd e -> Snd (shift i c e)
   | Fun e -> Fun (shift i (c + 1) e)
   | App (e1, e2) -> App (shift i c e1, shift i c e2)
   | FunType (t, e) -> FunType (t, shift i (c + 1) e)
@@ -23,7 +23,7 @@ let rec subst e n = function
   | Unit -> Unit
   | Pair (e1, e2) -> Pair (subst e n e1, subst e n e2)
   | Fst e1 -> Fst (subst e n e1)
-  | Snd e1 -> Fst (subst e n e1)
+  | Snd e1 -> Snd (subst e n e1)
   | Fun e1 -> Fun (subst (shift 1 0 e) (n + 1) e1)
   | App (e1, e2) -> App (subst e n e1, subst e n e2)
   | FunType (t, e1) -> FunType (t, subst (shift 1 0 e) (n + 1) e1)
@@ -35,7 +35,7 @@ let rec subst e n = function
 let rec shiftType i c = function
   | Pair (e1, e2) -> Pair (shiftType i c e1, shiftType i c e2)
   | Fst e -> Fst (shiftType i c e)
-  | Snd e -> Fst (shiftType i c e)
+  | Snd e -> Snd (shiftType i c e)
   | Fun e -> Fun (shiftType i c e)
   | App (e1, e2) -> App (shiftType i c e1, shiftType i c e2)
   | FunType (p, e) -> FunType (DBType.shiftType i c p, shiftType i c e)
@@ -48,7 +48,7 @@ let rec shiftType i c = function
 let rec substType t n = function
   | Pair (e1, e2) -> Pair (substType t n e1, substType t n e2)
   | Fst e1 -> Fst (substType t n e1)
-  | Snd e1 -> Fst (substType t n e1)
+  | Snd e1 -> Snd (substType t n e1)
   | Fun e1 -> Fun (substType t n e1)
   | App (e1, e2) -> App (substType t n e1, substType t n e2)
   | FunType (p, e1) -> FunType (DBType.substType t n p, substType t n e1)
@@ -71,13 +71,11 @@ let rec reduce = function
   | Fst e1 -> (
       match e1 with
       | Pair (e1, _) -> Some e1
-      | _ -> (
-          match reduce e1 with Some (Pair (e1, _)) -> Some e1 | _ -> None))
+      | _ -> ( match reduce e1 with Some e1 -> Some (Fst e1) | None -> None))
   | Snd e1 -> (
       match e1 with
       | Pair (_, e2) -> Some e2
-      | _ -> (
-          match reduce e1 with Some (Pair (_, e2)) -> Some e2 | _ -> None))
+      | _ -> ( match reduce e1 with Some e2 -> Some (Snd e2) | None -> None))
   | Fun _ -> None
   | App (e1, e2) -> (
       match e1 with
