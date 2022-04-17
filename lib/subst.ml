@@ -19,6 +19,7 @@ let rec substituteMono (tk : typeGenre) (x : typeVar) (target : monoType) :
         (RhoPair
            ( typeGenreToPoly (substituteMono tk x m1),
              typeGenreToPoly (substituteMono tk x m2) ))
+  | List m -> Rho (RhoList (typeGenreToPoly (substituteMono tk x m)))
   | t -> Mono t
 
 and substituteRho (tk : typeGenre) (x : typeVar) (target : rhoType) : typeGenre =

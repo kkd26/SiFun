@@ -15,6 +15,7 @@ let rec inTypeMono n t =
   | Fun (t1, t2) ->
       inTypeMono n t1;
       inTypeMono n t2
+  | List t -> inTypeMono n t
   | _ -> ()
 
 and inTypeRho n r =
@@ -45,6 +46,7 @@ let rec unifyMono (m1 : monoType) (m2 : monoType) : substitution IntState.t =
       unifyList [ (Mono m3, Mono m5); (Mono m4, Mono m6) ]
   | Pair (m3, m4), Pair (m5, m6) ->
       unifyList [ (Mono m3, Mono m5); (Mono m4, Mono m6) ]
+  | List m1, List m2 -> unifyList [(Mono m1, Mono m2)]
   | FreshVar _, Var _ | Var _, FreshVar _ ->
       raise (UnifyException "Cannot unify freshvar with type var")
   | FreshVar n, t | t, FreshVar n -> (
