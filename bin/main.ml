@@ -9,8 +9,8 @@ let fromFile filename () =
     lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = filename };
     let astList = lexbufToExprList lexbuf in
     let dBAst = List.map toDeBruijn astList in
-    let reduced = List.map Simple.reduceAll dBAst in
-    let infer = List.map Infer.inferTypeHMV dBAst in
+    let reduced = List.map Simple.evaluate dBAst in
+    let infer = List.map Infer.inferTypeBD dBAst in
     let typeAndReduced = List.combine infer reduced in
     List.iter
       (fun ((_, typ), reduced) ->

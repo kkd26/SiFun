@@ -1,15 +1,5 @@
 open DBAst
 
-let isValue = function
-  | Int _ -> true
-  | Var _ -> true
-  | Bool _ -> true
-  | Unit -> true
-  | Fun _ -> true
-  | FunType _ -> true
-  | Lam _ -> true
-  | _ -> false
-
 let rec shift i c = function
   | Int n -> Int n
   | Var n -> if n >= c then Var (n + i) else Var n
@@ -116,5 +106,4 @@ and reduceList = function
       | _ -> None)
 
 let doStep e = match reduce e with Some e -> e | None -> e
-
-let rec reduceAll e = match reduce e with Some e -> reduceAll e | None -> e
+let rec evaluate e = match reduce e with Some e -> evaluate e | None -> e

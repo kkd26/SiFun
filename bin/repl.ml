@@ -16,9 +16,9 @@ let repl () =
        (* convert to debruijn *)
        let debruijn = DBAst.toDeBruijn exp in
        (* infer type *)
-       let typ = snd (Infer.inferTypeHMV debruijn) in
+       let typ = snd (Infer.inferTypeBD debruijn) in
        (* reduce expression *)
-       let reduced = Simple.reduceAll debruijn in
+       let reduced = Simple.evaluate debruijn in
        (* print the result *)
        printf "- : %s | %s"
          (DBType.typeGenreToString typ)
