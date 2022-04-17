@@ -1,7 +1,7 @@
 %token <int> INT
 %token <string> VAR
 %token TRUE FALSE
-%token FST SND
+%token FST SND HD TL
 %token EOF LPAR RPAR COMMA SEMICOLON FUN ARRVAL LBRA RBRA
 %token TINT TBOOL TUNIT TFORALL TARR DOT LCUR RCUR LAM COLON
 
@@ -49,6 +49,8 @@ basicExpr:
   | LPAR e1 = expr COMMA e2 = expr RPAR            {Ast.Pair(e1, e2)}
   | FST b = basicExpr                              {Ast.Fst(b)}
   | SND b = basicExpr                              {Ast.Snd(b)}
+  | HD b = basicExpr                               {Ast.Head(b)}
+  | TL b = basicExpr                               {Ast.Tail(b)}
   | LBRA b = block RBRA                            {Ast.List(b)}
 
 appExpr:

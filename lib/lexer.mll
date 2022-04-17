@@ -24,6 +24,8 @@ rule read =
   | "false"       { FALSE }
   | "fst"         { FST }
   | "snd"         { SND }
+  | "hd"          { HD }
+  | "tl"          { TL }
   | "fn"          { FUN }
   | "lam"         { LAM }
   | "=>"          { ARRVAL }

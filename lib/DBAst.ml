@@ -16,6 +16,8 @@ type expr =
   | Lam of expr
   | Annot of expr * DBType.typeGenre
   | List of expr list
+  | Head of expr
+  | Tail of expr
 
 exception DBAstException of string
 
@@ -58,6 +60,8 @@ let toDeBruijn =
         let tk = DBType.typeToDeBruijn termEnv t in
         Annot (toDeBruijn' env termEnv e, tk)
     | List e -> List (List.map (toDeBruijn' env termEnv) e)
+    | Head e -> Head (toDeBruijn' env termEnv e)
+    | Tail e -> Tail (toDeBruijn' env termEnv e)
   in
   toDeBruijn' (emptyEnv "Empty var env") (emptyEnv "Empty type env")
 
@@ -101,6 +105,8 @@ let exprToString =
         "["
         ^ List.fold_left (fun x b -> x ^ " " ^ exprToString' typeVar var b) "" e
         ^ "]"
+    | Head e -> "hd " ^ exprToString' typeVar var e
+    | Tail e -> "tl " ^ exprToString' typeVar var e
   in
   exprToString' 1 16
 

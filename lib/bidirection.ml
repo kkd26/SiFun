@@ -98,6 +98,24 @@ let rec inferType' (ctx : TermCtx.termCtx) (e : DBAst.expr) =
           let s = combineSubst s3 (combineSubst s2 s1) in
           let t = typeGenreToList (applySubstToTypeGenre s t1) in
           returnNormalized (s, t))
+  | Head e ->
+      inferType' ctx e >>= fun (s1, t1) ->
+      freshName >>= fun x ->
+      let tx =
+        normalize (Rho (RhoList (typeGenreToPoly (Mono (FreshVar x)))))
+      in
+      unifyList [ (tx, t1) ] >>= fun s2 ->
+      let s3 = combineSubst s2 s1 in
+      returnNormalized (s3, applySubstToTypeGenre s3 (Mono (FreshVar x)))
+  | Tail e ->
+      inferType' ctx e >>= fun (s1, t1) ->
+      freshName >>= fun x ->
+      let tx =
+        normalize (Rho (RhoList (typeGenreToPoly (Mono (FreshVar x)))))
+      in
+      unifyList [ (tx, t1) ] >>= fun s2 ->
+      let s3 = combineSubst s2 s1 in
+      returnNormalized (s3, applySubstToTypeGenre s3 (Mono (List (FreshVar x))))
 
 and check' (tk : typeGenre) (ctx : TermCtx.termCtx) (e : DBAst.expr) =
   let open IntState in
@@ -144,8 +162,7 @@ and check' (tk : typeGenre) (ctx : TermCtx.termCtx) (e : DBAst.expr) =
       check' ty newCtx e2 >>= fun (s2, t2) ->
       let s3 = combineSubst s1 s2 in
       returnNormalized (s3, Rho (RhoPair (typeGenreToPoly t1, typeGenreToPoly t2)))
-  | (Fst e | Snd e) as e1 ->
-      check' tk ctx e >>= fun (s1, t1) ->
+  | (Fst _ | Snd _) as e1 ->
       freshName >>= fun x ->
       freshName >>= fun y ->
       let tx =
@@ -155,11 +172,10 @@ and check' (tk : typeGenre) (ctx : TermCtx.termCtx) (e : DBAst.expr) =
                 ( typeGenreToPoly (Mono (FreshVar x)),
                   typeGenreToPoly (Mono (FreshVar y)) )))
       in
-      unifyList [ (tx, t1) ] >>= fun s2 ->
-      let s3 = combineSubst s2 s1 in
+      unifyList [ (tx, tk) ] >>= fun s ->
       returnNormalized
-        ( s3,
-          applySubstToTypeGenre s3
+        ( s,
+          applySubstToTypeGenre s
             (match e1 with
             | Fst _ -> Mono (FreshVar x)
             | _ -> Mono (FreshVar y)) )
@@ -199,6 +215,22 @@ and check' (tk : typeGenre) (ctx : TermCtx.termCtx) (e : DBAst.expr) =
       unifyList [ (tk, t1) ] >>= fun s2 ->
       let s = combineSubst s2 s1 in
       returnNormalized (s, applySubstToTypeGenre s tk)
+  | Head _ ->
+      freshName >>= fun x ->
+      let tx =
+        normalize (Rho (RhoList (typeGenreToPoly (Mono (FreshVar x)))))
+      in
+      unifyList [ (tx, tk) ] >>= fun s ->
+      returnNormalized (s, applySubstToTypeGenre s (Mono (FreshVar x)))
+  | Tail e ->
+      check' tk ctx e >>= fun (s1, t1) ->
+      freshName >>= fun x ->
+      let tx =
+        normalize (Rho (RhoList (typeGenreToPoly (Mono (FreshVar x)))))
+      in
+      unifyList [ (tx, t1) ] >>= fun s2 ->
+      let s3 = combineSubst s2 s1 in
+      returnNormalized (s3, applySubstToTypeGenre s3 (Mono (List (FreshVar x))))
 
 and gen = function
   | Infer -> failwith "not supported"

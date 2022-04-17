@@ -15,6 +15,8 @@ let rec shift i c = function
   | Lam e -> Lam (shift i c e)
   | Annot (e, t) -> Annot (shift i c e, t)
   | List e -> List (List.map (shift i c) e)
+  | Head e -> Head (shift i c e)
+  | Tail e -> Tail (shift i c e)
 
 let rec subst e n = function
   | Int n -> Int n
@@ -31,6 +33,8 @@ let rec subst e n = function
   | Lam e1 -> Lam (subst e n e1)
   | Annot (e1, t) -> Annot (subst e n e1, t)
   | List e1 -> List (List.map (subst e n) e1)
+  | Head e1 -> Head (subst e n e1)
+  | Tail e1 -> Tail (subst e n e1)
 
 let rec shiftType i c = function
   | Pair (e1, e2) -> Pair (shiftType i c e1, shiftType i c e2)
@@ -43,6 +47,8 @@ let rec shiftType i c = function
   | Lam e -> Lam (shiftType i (c + 1) e)
   | Annot (e, m) -> Annot (shiftType i c e, DBType.shiftType i c m)
   | List e -> List (List.map (shiftType i c) e)
+  | Head e -> Head (shiftType i c e)
+  | Tail e -> Tail (shiftType i c e)
   | e -> e
 
 let rec substType t n = function
@@ -56,6 +62,8 @@ let rec substType t n = function
   | Lam e1 -> Lam (substType (DBType.shiftType 1 0 t) (n + 1) e1)
   | Annot (e1, m) -> Annot (substType t n e1, DBType.substType t n m)
   | List e -> List (List.map (substType t n) e)
+  | Head e1 -> Head (substType t n e1)
+  | Tail e1 -> Tail (substType t n e1)
   | e -> e
 
 let rec reduce = function
@@ -91,6 +99,15 @@ let rec reduce = function
   | Lam _ -> None
   | Annot (e, _) -> Some e
   | List e -> reduceList e
+  | Head e -> (
+      match e with
+      | List (x :: _) -> Some x
+      | List [] -> failwith "Empty list"
+      | _ -> ( match reduce e with Some e1 -> Some (Head e1) | None -> None))
+  | Tail e -> (
+      match e with
+      | List (_ :: xs) -> Some (List xs)
+      | _ -> ( match reduce e with Some e1 -> Some (Tail e1) | None -> None))
 
 and reduceList = function
   | [] -> None
