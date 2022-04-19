@@ -100,18 +100,14 @@ let rec inferType' check (ctx : termCtx) (e : DBAst.expr) :
   | Head e ->
       inferType' check ctx e >>= fun (s1, t1) ->
       freshName >>= fun x ->
-      let tx =
-        normalize (Rho (RhoList (typeGenreToPoly (Mono (FreshVar x)))))
-      in
+      let tx = Mono (List (FreshVar x)) in
       unifyList [ (tx, t1) ] >>= fun s2 ->
       let s3 = combineSubst s2 s1 in
       returnNormalized (s3, applySubstToTypeGenre s3 (Mono (FreshVar x)))
   | Tail e ->
       inferType' check ctx e >>= fun (s1, t1) ->
       freshName >>= fun x ->
-      let tx =
-        normalize (Rho (RhoList (typeGenreToPoly (Mono (FreshVar x)))))
-      in
+      let tx = Mono (List (FreshVar x)) in
       unifyList [ (tx, t1) ] >>= fun s2 ->
       let s3 = combineSubst s2 s1 in
       returnNormalized (s3, applySubstToTypeGenre s3 (Mono (List (FreshVar x))))
