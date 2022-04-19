@@ -60,9 +60,6 @@ let combineSubst (s1 : substitution) (s2 : substitution) : substitution =
   List.map (fun (x, t) -> (x, applySubstToTypeGenre s1 t)) (s1 @ s2)
 
 let combineSubstUnique (s1 : substitution) (s2 : substitution) : substitution =
-  let _ =
-    List.filter (fun (y, _) -> List.exists (fun (x, _) -> x <> y) s2) s1
-  in
   let s3 =
     List.filter (fun (y, _) -> List.for_all (fun (x, _) -> x <> y) s2) s1
   in
