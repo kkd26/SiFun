@@ -1,5 +1,19 @@
 open Utils
 
+let interactive = ref false
+let hm = ref false
+let hmv = ref false
+
+let speclist =
+  [
+    ("-i", Arg.Set interactive, "Run in interactive mode");
+    ("-hm", Arg.Set hm, "Run with HM type system");
+    ("-hmv", Arg.Set hmv, "Run with HMV type system");
+  ]
+
+let getSystem () =
+  if !hmv then Infer.HMV else if !hm then Infer.HM else Infer.BD
+
 let runFromFile system filename =
   let inx = open_in filename in
   try
