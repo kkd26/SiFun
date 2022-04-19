@@ -1,3 +1,7 @@
+let getFirst (a, _) = a
+let getSecond (_, b) = b
+let ( $ ) f g x = f (g x)
+
 let getPositionString (position : Lexing.position) =
   Printf.sprintf "File \"%s\", line %d, character %d:" position.pos_fname
     position.pos_lnum
@@ -18,6 +22,18 @@ let lexbufToExprList line =
   | Parser.Error ->
       let msg = lexerErrorMessage line "Syntax error" in
       raise (LexBufException msg)
+
+let getTypeAndReducedFromLexBuf (lexbuf : Lexing.lexbuf) :
+    (DBType.typeGenre * DBAst.expr) list =
+  let astList = lexbufToExprList lexbuf in
+  (* convert to debruijn *)
+  let dBAst = List.map DBAst.toDeBruijn astList in
+  (* infer type *)
+  let infer = List.map (getSecond $ Infer.inferTypeBD) dBAst in
+  (* reduce expressions *)
+  let reduced = List.map Simple.evaluate dBAst in
+  (* combine result *)
+  List.combine infer reduced
 
 (** Parses a string into a list of AST *)
 let stringToExprList input =
@@ -51,3 +67,8 @@ let printCtx ctx =
   in
   ();
   Printf.printf "]\n"
+
+let printTypeAndTypeGenre (typ, expr) =
+  Printf.printf "- : %s | %s"
+    (DBType.typeGenreToString typ)
+    (DBAst.exprToString expr)
