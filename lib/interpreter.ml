@@ -1,12 +1,12 @@
 open Utils
 
-let runFromFile filename =
+let runFromFile system filename =
   let inx = open_in filename in
   try
     (* lexical analyzer buffer from file *)
     let lexbuf = Lexing.from_channel inx in
     lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = filename };
-    let typeAndReduced = getTypeAndReducedFromLexBuf lexbuf in
+    let typeAndReduced = getTypeAndReducedFromLexBuf lexbuf system in
     List.iter (print_newline $ printTypeAndTypeGenre) typeAndReduced;
     close_in inx
   with e ->
@@ -14,7 +14,7 @@ let runFromFile filename =
     close_in_noerr inx;
     exit (-1)
 
-let repl () =
+let repl system () =
   (* lexical analyzer buffer from stdin *)
   let lexbuf = Lexing.from_channel stdin in
   lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = "console" };
@@ -24,7 +24,7 @@ let repl () =
     (try
        Printf.printf "\n> ";
        flush stdout;
-       let typeAndReduced = getTypeAndReducedFromLexBuf lexbuf in
+       let typeAndReduced = getTypeAndReducedFromLexBuf lexbuf system in
        let headTypeAndReduced = List.hd typeAndReduced in
        printTypeAndTypeGenre headTypeAndReduced
      with e -> Exception.handleExceptions e);

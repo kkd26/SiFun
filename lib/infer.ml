@@ -34,7 +34,8 @@ let rec inferType' check (ctx : termCtx) (e : DBAst.expr) :
       freshName >>= fun x ->
       let tx =
         normalize
-          (Rho (RhoFun (typeGenreToPoly tg, typeGenreToPoly (Mono (FreshVar x)))))
+          (Rho
+             (RhoFun (typeGenreToPoly tg, typeGenreToPoly (Mono (FreshVar x)))))
       in
       unifyList [ (tx, applySubstToTypeGenre s2 tf) ] >>= fun s3 ->
       returnNormalized
@@ -47,7 +48,8 @@ let rec inferType' check (ctx : termCtx) (e : DBAst.expr) :
       let s3 = combineSubst s2 s1 in
       let m1 = applySubstToTypeGenre s3 t1 in
       let m2 = applySubstToTypeGenre s3 t2 in
-      returnNormalized (s3, Rho (RhoPair (typeGenreToPoly m1, typeGenreToPoly m2)))
+      returnNormalized
+        (s3, Rho (RhoPair (typeGenreToPoly m1, typeGenreToPoly m2)))
   | (Fst e | Snd e) as e1 ->
       inferType' check ctx e >>= fun (s1, t1) ->
       freshName >>= fun x ->
@@ -81,7 +83,8 @@ let rec inferType' check (ctx : termCtx) (e : DBAst.expr) :
       let newCtx = updateCtx ctx t in
       inferType' check newCtx f >>= fun (s1, t1) ->
       let m1 = applySubstToTypeGenre s1 t in
-      returnNormalized (s1, Rho (RhoFun (typeGenreToPoly m1, typeGenreToPoly t1)))
+      returnNormalized
+        (s1, Rho (RhoFun (typeGenreToPoly m1, typeGenreToPoly t1)))
   | Lam e ->
       inferType' check (shift 1 0 ctx) e >>= fun (s1, t1) ->
       let a, r = typeGenreToPoly t1 in
@@ -112,7 +115,7 @@ let rec inferType' check (ctx : termCtx) (e : DBAst.expr) :
       let s3 = combineSubst s2 s1 in
       returnNormalized (s3, applySubstToTypeGenre s3 (Mono (List (FreshVar x))))
 
-let inferType (e : DBAst.expr) : substitution * typeGenre =
+let inferTypeHM (e : DBAst.expr) : substitution * typeGenre =
   let check (e : DBAst.expr) =
     match e with
     | TypeApp _ | FunType _ | Lam _ ->
@@ -130,3 +133,10 @@ let inferTypeHMV e =
 let inferTypeBD e =
   let open IntState in
   snd (runState (Bidirection.inferType Infer emptyCtx e) ~init:0)
+
+type system = HM | HMV | BD
+
+let inferType = function
+  | HM -> inferTypeHM
+  | HMV -> inferTypeHMV
+  | BD -> inferTypeBD

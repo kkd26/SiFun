@@ -1,4 +1,4 @@
 open Sifun
 open Interpreter
 
-let () = repl ()
+let () = repl Infer.BD ()

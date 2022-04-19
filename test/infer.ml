@@ -9,7 +9,7 @@ let inferUnit _ =
   let input : DBAst.expr = Unit in
   let expected = Mono Unit in
   (* ACT *)
-  let output = snd (inferType input) in
+  let output = snd (inferTypeHM input) in
   (* ASSERT *)
   assert_equal expected output
 
@@ -18,7 +18,7 @@ let inferBool _ =
   let input : DBAst.expr = Bool true in
   let expected = Mono Bool in
   (* ACT *)
-  let output = snd (inferType input) in
+  let output = snd (inferTypeHM input) in
   (* ASSERT *)
   assert_equal expected output
 
@@ -27,7 +27,7 @@ let inferInt1 _ =
   let input : DBAst.expr = Int 1 in
   let expected = Mono Int in
   (* ACT *)
-  let output = snd (inferType input) in
+  let output = snd (inferTypeHM input) in
   (* ASSERT *)
   assert_equal expected output
 
@@ -36,7 +36,7 @@ let inferPairInt1Int2 _ =
   let input : DBAst.expr = Pair (Int 1, Int 2) in
   let expected = Mono (Pair (Int, Int)) in
   (* ACT *)
-  let output = snd (inferType input) in
+  let output = snd (inferTypeHM input) in
   (* ASSERT *)
   assert_equal expected output
 
@@ -45,7 +45,7 @@ let inferPairUnitBoolFalse _ =
   let input : DBAst.expr = Pair (Unit, Bool false) in
   let expected = Mono (Pair (Unit, Bool)) in
   (* ACT *)
-  let output = snd (inferType input) in
+  let output = snd (inferTypeHM input) in
   (* ASSERT *)
   assert_equal expected output
 
@@ -54,7 +54,7 @@ let inferFunction _ =
   let input : DBAst.expr = Fun (Var 0) in
   let expected = Mono (Fun (FreshVar 0, FreshVar 0)) in
   (* ACT *)
-  let output = snd (inferType input) in
+  let output = snd (inferTypeHM input) in
   (* ASSERT *)
   assert_equal expected output
 
@@ -63,7 +63,7 @@ let inferFirst _ =
   let input : DBAst.expr = Fst (Pair (Int 1, Int 2)) in
   let expected = Mono Int in
   (* ACT *)
-  let output = snd (inferType input) in
+  let output = snd (inferTypeHM input) in
   (* ASSERT *)
   assert_equal expected output
 
@@ -72,7 +72,7 @@ let inferSecond _ =
   let input : DBAst.expr = Snd (Pair (Bool true, Bool false)) in
   let expected = Mono Bool in
   (* ACT *)
-  let output = snd (inferType input) in
+  let output = snd (inferTypeHM input) in
   (* ASSERT *)
   assert_equal expected output
 
@@ -83,7 +83,7 @@ let inferNestedFunctions _ =
     Mono (Fun (FreshVar 0, Fun (FreshVar 1, Fun (FreshVar 2, FreshVar 2))))
   in
   (* ACT *)
-  let output = snd (inferType input) in
+  let output = snd (inferTypeHM input) in
   (* ASSERT *)
   assert_equal expected output
 
@@ -100,7 +100,7 @@ let inferNestedFunctionsWithApplication _ =
              ) ))
   in
   (* ACT *)
-  let output = snd (inferType input) in
+  let output = snd (inferTypeHM input) in
   (* ASSERT *)
   assert_equal expected output
 
@@ -111,15 +111,13 @@ let inferNestedFunctionsWithApplication2 _ =
     Mono (Fun (FreshVar 3, Fun (FreshVar 1, Fun (FreshVar 2, FreshVar 3))))
   in
   (* ACT *)
-  let output = snd (inferType input) in
+  let output = snd (inferTypeHM input) in
   (* ASSERT *)
   assert_equal expected output
 
 let inferApplication _ =
   (* ARRANGE *)
-  let input : DBAst.expr =
-    Fun (Fun (Fun (App (App (Var 2, Var 1), Var 0))))
-  in
+  let input : DBAst.expr = Fun (Fun (Fun (App (App (Var 2, Var 1), Var 0)))) in
   let expected =
     Mono
       (Fun
@@ -127,7 +125,7 @@ let inferApplication _ =
            Fun (FreshVar 1, Fun (FreshVar 2, FreshVar 4)) ))
   in
   (* ACT *)
-  let output = snd (inferType input) in
+  let output = snd (inferTypeHM input) in
   (* ASSERT *)
   assert_equal expected output
 
@@ -136,7 +134,7 @@ let inferExprInParenthesis _ =
   let input : DBAst.expr = App (Int 1, Int 2) in
   let expected = Unify.UnifyException "Cannot unify int -> f0 and int" in
   (* ACT *)
-  let output _ = snd (inferType input) in
+  let output _ = snd (inferTypeHM input) in
   (* ASSERT *)
   assert_raises expected output
 
@@ -150,7 +148,7 @@ let firstAndApplication _ =
            Fun (FreshVar 1, FreshVar 4) ))
   in
   (* ACT *)
-  let output = snd (inferType input) in
+  let output = snd (inferTypeHM input) in
   (* ASSERT *)
   assert_equal expected output
 
@@ -159,7 +157,9 @@ let firstAndTypeApplication _ =
   let input : DBAst.expr = Fun (TypeApp (Fst (Var 0), Mono Int)) in
   let expected =
     Rho
-      (RhoFun ((0, RhoPair ((1, RhoMono (FreshVar 3)), (0, RhoMono (FreshVar 2)))), (0, RhoMono (FreshVar 3))))
+      (RhoFun
+         ( (0, RhoPair ((1, RhoMono (FreshVar 3)), (0, RhoMono (FreshVar 2)))),
+           (0, RhoMono (FreshVar 3)) ))
   in
   (* ACT *)
   let output = snd (inferTypeHMV input) in
@@ -173,7 +173,9 @@ let firstAndTypeApplication2 _ =
   in
   let expected =
     Rho
-      (RhoFun ((0, RhoPair ((2, RhoMono (FreshVar 4)), (0, RhoMono (FreshVar 2)))), (0, RhoMono (FreshVar 4))))
+      (RhoFun
+         ( (0, RhoPair ((2, RhoMono (FreshVar 4)), (0, RhoMono (FreshVar 2)))),
+           (0, RhoMono (FreshVar 4)) ))
   in
   (* ACT *)
   let output = snd (inferTypeHMV input) in
@@ -218,7 +220,11 @@ let lambdaTypeWithForAll _ =
     Lam (FunType (Poly (3, RhoMono (Fun (Var 2, Var 1))), Var 0))
   in
   let expected =
-    Poly (1, RhoFun ((3, RhoMono (Fun (Var 2, Var 1))), (3, RhoMono (Fun (Var 2, Var 1)))))
+    Poly
+      ( 1,
+        RhoFun
+          ((3, RhoMono (Fun (Var 2, Var 1))), (3, RhoMono (Fun (Var 2, Var 1))))
+      )
   in
   (* ACT *)
   let output = snd (inferTypeHMV input) in
@@ -235,7 +241,9 @@ let nestedLambda _ =
                ( Mono (Var 2),
                  Lam (Lam (Lam (Lam (FunType (Mono (Var 3), Var 1))))) ))))
   in
-  let expected = Poly (3, RhoFun ((0, RhoMono (Var 2)), (4, RhoMono (Fun (Var 3, Var 6))))) in
+  let expected =
+    Poly (3, RhoFun ((0, RhoMono (Var 2)), (4, RhoMono (Fun (Var 3, Var 6)))))
+  in
   (* ACT *)
   let output = snd (inferTypeHMV input) in
   (* ASSERT *)
@@ -251,7 +259,9 @@ let funPairTypedApp1True _ =
             App (TypeApp (Var 0, Mono Bool), Bool true) ) )
   in
   let expected =
-    Rho (RhoFun ((1, RhoMono (Fun (Var 0, Var 0))), (0, RhoMono (Pair (Int, Bool)))))
+    Rho
+      (RhoFun
+         ((1, RhoMono (Fun (Var 0, Var 0))), (0, RhoMono (Pair (Int, Bool)))))
   in
   (* ACT *)
   let output = snd (inferTypeHMV input) in
