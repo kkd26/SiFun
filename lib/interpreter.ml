@@ -3,12 +3,14 @@ open Utils
 let interactive = ref false
 let hm = ref false
 let hmv = ref false
+let eval_string = ref ""
 
 let speclist =
   [
     ("-i", Arg.Set interactive, "Run in interactive mode");
     ("-hm", Arg.Set hm, "Run with HM type system");
     ("-hmv", Arg.Set hmv, "Run with HMV type system");
+    ("-e", Arg.Set_string eval_string, "Eval from string");
   ]
 
 let getSystem () =
@@ -44,3 +46,11 @@ let repl system () =
      with e -> Exception.handleExceptions e);
     flush stdout
   done
+
+let runFromString system eval_string =
+  try
+    let lexbuf = Lexing.from_string eval_string in
+    let typeAndReduced = getTypeAndReducedFromLexBuf lexbuf system in
+    let headTypeAndReduced = List.hd typeAndReduced in
+    (print_newline $ printTypeAndTypeGenre) headTypeAndReduced
+  with e -> Exception.handleExceptions e
