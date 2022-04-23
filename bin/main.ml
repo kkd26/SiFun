@@ -8,6 +8,7 @@ let anon_fun filename = input_file := filename
 let () =
   Arg.parse speclist anon_fun usage_msg;
   let system = getSystem () in
-  if !eval_string <> "" then runFromString system !eval_string
-  else runFromFile system !input_file;
-  if !interactive then repl system ()
+  let printMode = getPrintMode () in
+  if !eval_string <> "" then runFromString system printMode !eval_string
+  else runFromFile system printMode !input_file;
+  if !interactive then repl system printMode ()

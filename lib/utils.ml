@@ -44,7 +44,7 @@ let printTypeExpr typeExpr =
 
 let printTypeGenre typeGenre =
   let typeGenreString = DBType.typeGenreToString typeGenre in
-  Printf.printf "TypeGenre:\n%s\n" typeGenreString
+  Printf.printf "%s" typeGenreString
 
 let printSubst subst = Printf.printf "%s\n" (Subst.substToString subst)
 
