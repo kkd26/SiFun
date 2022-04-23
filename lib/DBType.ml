@@ -23,8 +23,20 @@ type typeGenre = Mono of monoType | Rho of rhoType | Poly of polyType
 
 exception DBTypeException of string
 
+let numToString n start range =
+  let i = n / range in
+  String.make 1 (Char.chr (Char.code 'a' + (start + (n mod range))))
+  ^ if i <> 0 then string_of_int i else ""
+
+let numToStringTypeVar n = numToString n 0 16
+let numToStringExprVar n = numToString n 16 10
+
+let rec printTypeVars var = function
+  | 0 -> ""
+  | n -> printTypeVars var (n - 1) ^ " " ^ numToStringTypeVar (n - 1 + var)
+
 let rec monoTypeToString' var = function
-  | Var v -> string_of_int v
+  | Var v -> numToStringTypeVar (var - v - 1)
   | FreshVar v -> "f" ^ string_of_int v
   | Int -> "int"
   | Bool -> "bool"
@@ -38,25 +50,27 @@ let rec monoTypeToString' var = function
   | List m -> monoTypeToString' var m ^ " list"
 
 and rhoToString' var = function
-  | RhoMono m -> "R[" ^ monoTypeToString' var m ^ "]"
-  | RhoFun (p1, p2) ->
-      "R[" ^ polyToString' var p1 ^ "->" ^ polyToString' var p2 ^ "]"
-  | RhoPair (p1, p2) -> "R[" ^ polyToString' var p1 ^ "," ^ polyToString' var p2 ^ "]"
-  | RhoList p -> "R[" ^ polyToString' var p ^ "]"
+  | RhoMono m -> monoTypeToString' var m
+  | RhoFun (p1, p2) -> polyToString' var p1 ^ " -> " ^ polyToString' var p2
+  | RhoPair (p1, p2) ->
+      "(" ^ polyToString' var p1 ^ ", " ^ polyToString' var p2 ^ ")"
+  | RhoList p -> polyToString' var p ^ " list"
 
 and polyToString' var ((a, r) : polyType) =
-  "(" ^ string_of_int a ^ "," ^ rhoToString' var r ^ ")"
+  match a with
+  | 0 -> rhoToString' var r
+  | n -> "forall" ^ printTypeVars var n ^ ". (" ^ rhoToString' (var + n) r ^ ")"
 
-let monoTypeToString = monoTypeToString' 1
+let monoTypeToString = monoTypeToString' 16
+let rhoToString = rhoToString' 16
+let polyToString = polyToString' 16
 
-let rhoToString = rhoToString' 1
+let typeGenreToString' var = function
+  | Mono m -> monoTypeToString' var m
+  | Rho r -> rhoToString' var r
+  | Poly p -> polyToString' var p
 
-let polyToString = polyToString' 1
-
-let typeGenreToString = function
-  | Mono m -> monoTypeToString m
-  | Rho r -> rhoToString r
-  | Poly p -> polyToString p
+let typeGenreToString = typeGenreToString' 0
 
 let typeGenreToMono = function
   | Mono m -> m
@@ -251,11 +265,10 @@ let applyType (typeGenre : typeGenre) (tk : typeGenre) =
     | 0 -> Poly p
     | a ->
         Poly
-          (a - 1, typeGenreToRho (shiftType (-1) a (substRho typeGenre (a - 1) r)))
+          ( a - 1,
+            typeGenreToRho (shiftType (-1) a (substRho typeGenre (a - 1) r)) )
   in
   normalize p
-
-let incChar c = String.make 1 (Char.chr (c + Char.code 'a'))
 
 let getListType t =
   let t = normalize t in

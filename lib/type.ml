@@ -13,11 +13,6 @@ type monoType =
 let forAllFromList typeVarList typeExpr =
   List.fold_right (fun v t -> ForAll (v, t)) typeVarList typeExpr
 
-let numToString n =
-  let i = n / 26 in
-  String.make 1 (Char.chr (Char.code 'a' + (n mod 26)))
-  ^ if i <> 0 then string_of_int i else ""
-
 let rec typeExprToString = function
   | Var s -> "Var(" ^ s ^ ")"
   | Int -> "Int"

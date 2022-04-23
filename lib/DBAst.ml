@@ -68,7 +68,7 @@ let toDeBruijn =
 let exprToString =
   let rec exprToString' typeVar var = function
     | Int i -> string_of_int i
-    | Var v -> DBType.incChar (var - v - 1)
+    | Var v -> DBType.numToStringExprVar (var - v - 1)
     | Bool b -> string_of_bool b
     | Unit -> "()"
     | Pair (e1, e2) ->
@@ -80,9 +80,16 @@ let exprToString =
     | Fst e -> "fst " ^ exprToString' typeVar var e
     | Snd e -> "snd " ^ exprToString' typeVar var e
     | Fun e ->
-        "fn " ^ DBType.incChar var ^ " => " ^ exprToString' typeVar (var + 1) e
+        "fn "
+        ^ DBType.numToStringExprVar var
+        ^ " => "
+        ^ exprToString' typeVar (var + 1) e
     | FunType (t, e) ->
-        "fn " ^ DBType.incChar var ^ " : " ^ DBType.typeGenreToString t ^ " => "
+        "fn "
+        ^ DBType.numToStringExprVar var
+        ^ " : "
+        ^ DBType.typeGenreToString' typeVar t
+        ^ " => "
         ^ exprToString' typeVar (var + 1) e
     | App (e1, e2) ->
         "("
@@ -95,12 +102,16 @@ let exprToString =
         ^ exprToString' typeVar var e
         ^ ") {" ^ DBType.typeGenreToString t ^ "}"
     | Lam e ->
-        "lam " ^ DBType.incChar typeVar ^ "."
+        "lam "
+        ^ DBType.numToStringTypeVar typeVar
+        ^ "."
         ^ exprToString' (typeVar + 1) var e
     | Annot (e, t) ->
         "("
         ^ exprToString' typeVar var e
-        ^ ") : (" ^ DBType.typeGenreToString t ^ ")"
+        ^ ") : ("
+        ^ DBType.typeGenreToString' typeVar t
+        ^ ")"
     | List e ->
         "["
         ^ List.fold_left (fun x b -> x ^ " " ^ exprToString' typeVar var b) "" e
@@ -108,7 +119,7 @@ let exprToString =
     | Head e -> "hd " ^ exprToString' typeVar var e
     | Tail e -> "tl " ^ exprToString' typeVar var e
   in
-  exprToString' 1 16
+  exprToString' 0 0
 
 let rec exprListToString = function
   | [] -> ""

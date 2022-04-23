@@ -45,7 +45,8 @@ let rec inferType' (ctx : TermCtx.termCtx) (e : DBAst.expr) =
       (* you have to leave it *)
       inferType' newCtx e2 >>= fun (s2, t2) ->
       let s3 = combineSubstUnique s1 s2 in
-      returnNormalized (s3, Rho (RhoPair (typeGenreToPoly t1, typeGenreToPoly t2)))
+      returnNormalized
+        (s3, Rho (RhoPair (typeGenreToPoly t1, typeGenreToPoly t2)))
   | (Fst e | Snd e) as e1 ->
       inferType' ctx e >>= fun (s1, t1) ->
       freshName >>= fun x ->
@@ -79,7 +80,8 @@ let rec inferType' (ctx : TermCtx.termCtx) (e : DBAst.expr) =
       let newCtx = updateCtx ctx t in
       inferType' newCtx f >>= fun (s1, t1) ->
       let m1 = applySubstToTypeGenre s1 t in
-      returnNormalized (s1, Rho (RhoFun (typeGenreToPoly m1, typeGenreToPoly t1)))
+      returnNormalized
+        (s1, Rho (RhoFun (typeGenreToPoly m1, typeGenreToPoly t1)))
   | Lam e ->
       inferType' (shift 1 0 ctx) e >>= fun (s1, t1) ->
       let a, r = typeGenreToPoly t1 in
@@ -120,7 +122,8 @@ let rec inferType' (ctx : TermCtx.termCtx) (e : DBAst.expr) =
 and check' (tk : typeGenre) (ctx : TermCtx.termCtx) (e : DBAst.expr) =
   let open IntState in
   match e with
-  | Int _ -> unifyList [ (tk, Mono Int) ] >>= fun s -> returnNormalized (s, Mono Int)
+  | Int _ ->
+      unifyList [ (tk, Mono Int) ] >>= fun s -> returnNormalized (s, Mono Int)
   | Bool _ ->
       unifyList [ (tk, Mono Bool) ] >>= fun s -> returnNormalized (s, Mono Bool)
   | Unit ->
@@ -161,7 +164,8 @@ and check' (tk : typeGenre) (ctx : TermCtx.termCtx) (e : DBAst.expr) =
       let ty = applySubstToTypeGenre s (Mono (FreshVar y)) in
       check' ty newCtx e2 >>= fun (s2, t2) ->
       let s3 = combineSubst s1 s2 in
-      returnNormalized (s3, Rho (RhoPair (typeGenreToPoly t1, typeGenreToPoly t2)))
+      returnNormalized
+        (s3, Rho (RhoPair (typeGenreToPoly t1, typeGenreToPoly t2)))
   | (Fst _ | Snd _) as e1 ->
       freshName >>= fun x ->
       freshName >>= fun y ->
@@ -200,7 +204,8 @@ and check' (tk : typeGenre) (ctx : TermCtx.termCtx) (e : DBAst.expr) =
       let tk = applySubstToTypeGenre s (Mono (FreshVar y)) in
       check' tk newCtx f >>= fun (s1, t1) ->
       let m1 = applySubstToTypeGenre s1 t1 in
-      returnNormalized (s1, Rho (RhoFun (typeGenreToPoly m1, typeGenreToPoly t1)))
+      returnNormalized
+        (s1, Rho (RhoFun (typeGenreToPoly m1, typeGenreToPoly t1)))
   | Lam e ->
       check' tk (shift 1 0 ctx) e >>= fun (s1, t1) ->
       let a, r = typeGenreToPoly t1 in

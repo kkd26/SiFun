@@ -16,6 +16,18 @@ let speclist =
 let getSystem () =
   if !hmv then Infer.HMV else if !hm then Infer.HM else Infer.BD
 
+let getTypeAndReducedFromLexBuf (lexbuf : Lexing.lexbuf) (system : Infer.system)
+    : (DBType.typeGenre * DBAst.expr) list =
+  let astList = lexbufToExprList lexbuf in
+  (* convert to debruijn *)
+  let dBAst = List.map DBAst.toDeBruijn astList in
+  (* infer type *)
+  let infer = List.map (getSecond $ Infer.inferType system) dBAst in
+  (* reduce expressions *)
+  let reduced = List.map Simple.evaluate dBAst in
+  (* combine result *)
+  List.combine infer reduced
+
 let runFromFile system filename =
   let inx = open_in filename in
   try
