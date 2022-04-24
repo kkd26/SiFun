@@ -1,0 +1,1 @@
+(fn pair => (fn x1 => (fn x2 => (fn x3 => (fn x4 => (fn x5 => x5 (fn y => y)) (fn y => x4 (x4 y))) (fn y => x3 (x3 y))) (fn y => x2 (x2 y))) (fn y => x1 (x1 y))) (fn y => pair y y) ) (fn x => fn y => fn z => z x y)

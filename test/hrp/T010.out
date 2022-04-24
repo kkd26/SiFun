@@ -1,0 +1,10 @@
+int
+bool
+bool
+unit
+(int, int)
+int
+f0 -> f0
+f0 -> f1 -> (f0, f1)
+(f2 -> f3) -> f2 -> f3
+(int, int)
