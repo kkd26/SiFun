@@ -117,9 +117,7 @@ let inferNestedFunctionsWithApplication2 _ =
 
 let inferApplication _ =
   (* ARRANGE *)
-  let input : DBAst.expr =
-    Fun (Fun (Fun (App (App (Var 2, Var 1), Var 0))))
-  in
+  let input : DBAst.expr = Fun (Fun (Fun (App (App (Var 2, Var 1), Var 0)))) in
   let expected =
     Mono
       (Fun
@@ -157,7 +155,12 @@ let firstAndApplication _ =
 let firstAndTypeApplication _ =
   (* ARRANGE *)
   let input : DBAst.expr = Fun (TypeApp (Fst (Var 0), Mono Int)) in
-  let expected = Mono (Fun (Pair (FreshVar 1, FreshVar 2), FreshVar 1)) in
+  let expected =
+    Rho
+      (RhoFun
+         ( (0, RhoPair ((1, RhoMono (FreshVar 3)), (0, RhoMono (FreshVar 2)))),
+           (0, RhoMono (FreshVar 3)) ))
+  in
   (* ACT *)
   let output = snd (inferTypeBD input) in
   (* ASSERT *)
@@ -168,7 +171,12 @@ let firstAndTypeApplication2 _ =
   let input : DBAst.expr =
     Fun (TypeApp (TypeApp (Fst (Var 0), Mono Int), Mono Bool))
   in
-  let expected = Mono (Fun (Pair (FreshVar 1, FreshVar 2), FreshVar 1)) in
+  let expected =
+    Rho
+      (RhoFun
+         ( (0, RhoPair ((2, RhoMono (FreshVar 4)), (0, RhoMono (FreshVar 2)))),
+           (0, RhoMono (FreshVar 4)) ))
+  in
   (* ACT *)
   let output = snd (inferTypeBD input) in
   (* ASSERT *)
@@ -212,7 +220,10 @@ let lambdaTypeWithForAll _ =
     FunType (Poly (3, RhoMono (Fun (Var 2, Var 1))), Var 0)
   in
   let expected =
-    Rho (RhoFun ((3, RhoMono (Fun (Var 2, Var 1))), (0, RhoMono (Fun (FreshVar 0, FreshVar 1)))))
+    Rho
+      (RhoFun
+         ( (3, RhoMono (Fun (Var 2, Var 1))),
+           (0, RhoMono (Fun (FreshVar 0, FreshVar 1))) ))
   in
   (* ACT *)
   let output = snd (inferTypeBD input) in
@@ -229,7 +240,9 @@ let nestedLambda _ =
                ( Mono (Var 2),
                  Lam (Lam (Lam (Lam (FunType (Mono (Var 3), Var 1))))) ))))
   in
-  let expected = Poly (3, RhoFun ((0, RhoMono (Var 2)), (4, RhoMono (Fun (Var 3, Var 6))))) in
+  let expected =
+    Poly (3, RhoFun ((0, RhoMono (Var 2)), (4, RhoMono (Fun (Var 3, Var 6)))))
+  in
   (* ACT *)
   let output = snd (inferTypeBD input) in
   (* ASSERT *)
@@ -243,7 +256,9 @@ let funPairTypedApp1True _ =
         Pair (App (Var 0, Int 1), App (Var 0, Bool true)) )
   in
   let expected =
-    Rho (RhoFun ((1, RhoMono (Fun (Var 0, Var 0))), (0, RhoMono (Pair (Int, Bool)))))
+    Rho
+      (RhoFun
+         ((1, RhoMono (Fun (Var 0, Var 0))), (0, RhoMono (Pair (Int, Bool)))))
   in
   (* ACT *)
   let output = snd (inferTypeBD input) in
@@ -271,7 +286,10 @@ let appPairApp1TrueIdentityAnnotated _ =
     App
       ( Annot
           ( Fun (Pair (App (Var 0, Bool false), App (Var 0, Int 2))),
-            Rho (RhoFun ((1, RhoMono (Fun (Var 0, Var 0))), (0, RhoMono (Pair (Bool, Int))))) ),
+            Rho
+              (RhoFun
+                 ( (1, RhoMono (Fun (Var 0, Var 0))),
+                   (0, RhoMono (Pair (Bool, Int))) )) ),
         Fun (Var 0) )
   in
   let expected = Mono (Pair (Bool, Int)) in

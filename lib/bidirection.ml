@@ -69,7 +69,7 @@ let rec inferType' (ctx : TermCtx.termCtx) (e : DBAst.expr) =
   | TypeApp (e, t) ->
       inferType' ctx e >>= fun (s1, t1) ->
       freshName >>= fun x ->
-      let tx = Mono (FreshVar x) in
+      let tx = Poly (1, RhoMono (FreshVar x)) in
       unifyList [ (tx, t1) ] >>= fun s2 ->
       let s3 = combineSubst s2 s1 in
       let tw =
