@@ -33,6 +33,11 @@ get_type (){
     echo "$type"
 }
 
+get_type_haskell (){
+    runghc -XRankNTypes -XScopedTypeVariables $1
+    # ghci -XRankNTypes -XScopedTypeVariables -ghci-script $1
+}
+
 get_reduced (){
     reduced=$(dune exec -- sifun -e "$1")
     echo "${reduced#*|}" | xargs
