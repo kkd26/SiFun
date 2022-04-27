@@ -64,6 +64,8 @@ compare_output (){
 
     if ! [ -s $1 ]; then
         echo_yellow "EMPTY"
+    elif [[ $expected == ":time" ]]; then
+        echo_yellow "TIME_ONLY\t$runtime"
     elif [[ $output == $expected ]]; then
         echo_green "OK\t\t$runtime"
     else
@@ -98,6 +100,7 @@ main (){
     echo -e "Name\t\tResult\t\tTime"
     echo_line
     compare_all $test_dir
+    echo_line
 }
 
 main 
