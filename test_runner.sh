@@ -20,7 +20,7 @@ echo_red (){
 }
 
 echo_line (){
-    echo "---------------------------------------------"
+    echo "-------------------------------------------------------------"
 }
 
 get_output (){
@@ -112,12 +112,12 @@ get_test_dir (){
 }
 
 main (){
-    get_test_dir
+    get_test_dir $1
     echo -e "Running tests in $test_dir\n"
-    echo -e "Name\t\tResult\t\tTime"
+    echo -e "Name\t\tResult\t\tTime\t\tHaskell Time"
     echo_line
     compare_all $test_dir
     echo_line
 }
 
-main
+main $1
