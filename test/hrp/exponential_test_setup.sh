@@ -7,10 +7,12 @@ program0_hs="\x -> x"
 
 dir=$(dirname "$0")
 
-touch $dir/T0{20..29}.sf.in
-touch $dir/T0{20..29}.out
+init_files_sf (){
+    touch $dir/T0{20..29}.sf.in
+    touch $dir/T0{20..29}.out
 
-echo ":time" | tee $dir/T0{20..29}.out > /dev/null
+    echo ":time" | tee $dir/T0{20..29}.out > /dev/null
+}
 
 make_next_sf (){
     echo "fn x => x ($1) ($1)"
@@ -56,8 +58,6 @@ init_programs (){
     done
 }
 
-init_programs
-
 while getopts "h" options; do
     case "${options}" in
         h)
@@ -66,4 +66,9 @@ while getopts "h" options; do
     esac
 done
 
-init_programs
+main (){
+    init_files_sf
+    init_programs
+}
+
+main
