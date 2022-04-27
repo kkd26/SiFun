@@ -34,8 +34,11 @@ get_type (){
 }
 
 get_type_haskell (){
-    runghc -XRankNTypes -XScopedTypeVariables $1
-    # ghci -XRankNTypes -XScopedTypeVariables -ghci-script $1
+    # runghc -XRankNTypes -XScopedTypeVariables $1
+    out=$(echo ":q" | ghci -XRankNTypes -XScopedTypeVariables -ghci-script $1)
+    type=${out##*:: }
+    type=${type%%Loaded*}
+    echo "$type" | xargs
 }
 
 get_reduced (){
@@ -44,32 +47,46 @@ get_reduced (){
 }
 
 run_test (){
-    tempfile=${1/in/tmp}
+    tempfile=${1/sf.in/tmp}
     start=`date +%s.%N`
     dune exec -- sifun -t $1 > $tempfile
     end=`date +%s.%N`
     echo "$end - $start" | bc -l
 }
 
+run_test_hs (){
+    start=`date +%s.%N`
+    get_type_haskell $1 > /dev/null
+    end=`date +%s.%N`
+    echo "$end - $start" | bc -l
+}
+
 compare_output (){
-    tempfile=${1/in/tmp}
-    expected_file=${1/in/out}
+    tempfile=${1/sf.in/tmp}
+    expected_file=${1/sf.in/out}
+    haskell_file=${1/sf/hs}
 
     runtime=$(run_test $1)
+
+    if [ -s $haskell_file ]; then
+        runtime_hs=$(run_test_hs $haskell_file)
+    else
+        runtime_hs=""
+    fi
 
     output=$(cat "$tempfile")
     expected=$(cat "$expected_file")
 
-    echo -ne "${1##*/}\t\t"
+    echo -ne "${1##*/}\t"
 
     if ! [ -s $1 ]; then
         echo_yellow "EMPTY"
     elif [[ $expected == ":time" ]]; then
-        echo_yellow "TIME_ONLY\t$runtime"
+        echo_yellow "TIME_ONLY\t$runtime\t$runtime_hs"
     elif [[ $output == $expected ]]; then
-        echo_green "OK\t\t$runtime"
+        echo_green "OK\t\t$runtime\t$runtime_hs"
     else
-        echo_red "ERROR\t\t$runtime"
+        echo_red "ERROR\t\t$runtime\t$runtime_hs"
         diff --color $expected_file $tempfile
     fi
 
@@ -77,7 +94,7 @@ compare_output (){
 }
 
 compare_all (){
-    files="$1/*.in"
+    files="$1/*.sf.in"
     for i in $files; do
         if [ -f "$i" ]; then
             compare_output $i
@@ -103,4 +120,4 @@ main (){
     echo_line
 }
 
-main 
+main
