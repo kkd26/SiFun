@@ -18,7 +18,7 @@ let rec inferType' (ctx : TermCtx.termCtx) (e : DBAst.expr) =
   | Bool _ -> returnNormalized (emptySubst, Mono Bool)
   | Unit -> returnNormalized (emptySubst, Mono Unit)
   | Var x ->
-      let tk : typeGenre = find x ctx in
+      let tk : typeGenre = takeNth x ctx in
       inst Infer tk
   | Fun f ->
       freshName >>= fun x ->
@@ -129,7 +129,7 @@ and check' (tk : typeGenre) (ctx : TermCtx.termCtx) (e : DBAst.expr) =
   | Unit ->
       unifyList [ (tk, Mono Unit) ] >>= fun s -> returnNormalized (s, Mono Unit)
   | Var x ->
-      let tk1 : typeGenre = find x ctx in
+      let tk1 : typeGenre = takeNth x ctx in
       inst (Check tk) tk1
   | Fun f ->
       freshName >>= fun x ->

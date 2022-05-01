@@ -19,7 +19,7 @@ let rec inferType' check (ctx : termCtx) (e : DBAst.expr) :
   | Bool _ -> returnNormalized (emptySubst, Mono Bool)
   | Unit -> returnNormalized (emptySubst, Mono Unit)
   | Var x ->
-      let polyType : typeGenre = find x ctx in
+      let polyType : typeGenre = takeNth x ctx in
       returnNormalized (emptySubst, polyType)
   | Fun f ->
       freshName >>= fun x ->
