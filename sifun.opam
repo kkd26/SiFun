@@ -1,6 +1,6 @@
 opam-version: "2.0"
 name: "sifun"
-version: "2.0.0"
+version: "3.0.0"
 synopsis:
   "Interpreter for SiFun (Simple Functional) Language with three different type systems (supports Higher Rank Polymorphism)"
 maintainer: ["Krzysztof Druciarek <kkd26@cam.ac.uk>"]

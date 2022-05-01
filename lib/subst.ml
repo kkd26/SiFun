@@ -54,7 +54,7 @@ let applySubstToTypeGenre (s : substitution) (t : typeGenre) : typeGenre =
   List.fold_right (fun (x, s) -> substitute s x) s t
 
 let applySubstToCtx s (ctx : termCtx) : termCtx =
-  List.map (applySubstToTypeGenre s) ctx
+  applyFunctionToContext (applySubstToTypeGenre s) ctx
 
 let combineSubst (s1 : substitution) (s2 : substitution) : substitution =
   List.map (fun (x, t) -> (x, applySubstToTypeGenre s1 t)) (s1 @ s2)
