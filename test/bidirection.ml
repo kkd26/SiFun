@@ -320,6 +320,142 @@ let appVar0Var0 _ =
   (* ASSERT *)
   assert_raises expected output
 
+let list _ =
+  (* ARRANGE *)
+  let input : DBAst.expr = List [ Int 1 ] in
+  let expected = Mono (List Int) in
+  (* ACT *)
+  let output = snd (inferTypeBD input) in
+  (* ASSERT *)
+  assert_equal expected output
+
+let head _ =
+  (* ARRANGE *)
+  let input : DBAst.expr = Head (List [ Int 1 ]) in
+  let expected = Mono Int in
+  (* ACT *)
+  let output = snd (inferTypeBD input) in
+  (* ASSERT *)
+  assert_equal expected output
+
+let tail _ =
+  (* ARRANGE *)
+  let input : DBAst.expr = Tail (List [ Int 1 ]) in
+  let expected = Mono (List Int) in
+  (* ACT *)
+  let output = snd (inferTypeBD input) in
+  (* ASSERT *)
+  assert_equal expected output
+
+let checkUnit _ =
+  (* ARRANGE *)
+  let input : DBAst.expr = Unit in
+  let inputCheck = Mono Unit in
+  let expected = Mono Unit in
+  (* ACT *)
+  let output = snd (checkTypeBD inputCheck input) in
+  (* ASSERT *)
+  assert_equal expected output
+
+let checkFirst _ =
+  (* ARRANGE *)
+  let input : DBAst.expr = Fst (Pair (Int 1, Bool false)) in
+  let inputCheck = Mono (Pair (Int, Bool)) in
+  let expected = Mono Int in
+  (* ACT *)
+  let output = snd (checkTypeBD inputCheck input) in
+  (* ASSERT *)
+  assert_equal expected output
+
+let checkSecond _ =
+  (* ARRANGE *)
+  let input : DBAst.expr = Snd (Pair (Int 1, Bool false)) in
+  let inputCheck = Mono (Pair (Int, Bool)) in
+  let expected = Mono Bool in
+  (* ACT *)
+  let output = snd (checkTypeBD inputCheck input) in
+  (* ASSERT *)
+  assert_equal expected output
+
+let checkTypeApp _ =
+  (* ARRANGE *)
+  let input : DBAst.expr = TypeApp (Fun (Var 0), Mono Int) in
+  let inputCheck = Mono (Fun (Int, Int)) in
+  let expected = Mono (Fun (Int, Int)) in
+  (* ACT *)
+  let output = snd (checkTypeBD inputCheck input) in
+  (* ASSERT *)
+  assert_equal expected output
+
+let checkFunType _ =
+  (* ARRANGE *)
+  let input : DBAst.expr = FunType (Mono Int, Var 0) in
+  let inputCheck = Mono (Fun (Int, Int)) in
+  let expected = Mono (Fun (Int, Int)) in
+  (* ACT *)
+  let output = snd (checkTypeBD inputCheck input) in
+  (* ASSERT *)
+  assert_equal expected output
+
+let checkLam _ =
+  (* ARRANGE *)
+  let input : DBAst.expr = Lam (FunType (Mono (Var 0), Var 0)) in
+  let inputCheck = Mono (Fun (Var 0, Var 0)) in
+  let expected = Poly (1, RhoMono (Fun (Var 0, Var 0))) in
+  (* ACT *)
+  let output = snd (checkTypeBD inputCheck input) in
+  (* ASSERT *)
+  assert_equal expected output
+
+let checkAnnot _ =
+  (* ARRANGE *)
+  let input : DBAst.expr = Annot (Int 1, Mono Int) in
+  let inputCheck = Mono Int in
+  let expected = Mono Int in
+  (* ACT *)
+  let output = snd (checkTypeBD inputCheck input) in
+  (* ASSERT *)
+  assert_equal expected output
+
+let checkList _ =
+  (* ARRANGE *)
+  let input : DBAst.expr = List [ Int 1; Int 2 ] in
+  let inputCheck = Mono (List Int) in
+  let expected = Mono (List Int) in
+  (* ACT *)
+  let output = snd (checkTypeBD inputCheck input) in
+  (* ASSERT *)
+  assert_equal expected output
+
+let checkHead _ =
+  (* ARRANGE *)
+  let input : DBAst.expr = Head (List [ Int 1; Int 2 ]) in
+  let inputCheck = Mono (List Int) in
+  let expected = Mono Int in
+  (* ACT *)
+  let output = snd (checkTypeBD inputCheck input) in
+  (* ASSERT *)
+  assert_equal expected output
+
+let checkTail _ =
+  (* ARRANGE *)
+  let input : DBAst.expr = Tail (List [ Int 1; Int 2 ]) in
+  let inputCheck = Mono (List Int) in
+  let expected = Mono (List Int) in
+  (* ACT *)
+  let output = snd (checkTypeBD inputCheck input) in
+  (* ASSERT *)
+  assert_equal expected output
+
+let genError _ =
+  (* ARRANGE *)
+  let input = Direction.Infer in
+  let expected = Failure "not supported" in
+  (* ACT *)
+  let output _ = Bidirection.gen input in
+  (* ASSERT *)
+  assert_raises expected output
+
 let suite =
   "BidirectionalInferenceTest"
   >::: [
@@ -352,6 +488,20 @@ let suite =
          "appPairApp1TrueIdentityNotAnnotated"
          >:: appPairApp1TrueIdentityNotAnnotated;
          "appVar0Var0" >:: appVar0Var0;
+         "list" >:: list;
+         "head" >:: head;
+         "tail" >:: tail;
+         "checkUnit" >:: checkUnit;
+         "checkFirst" >:: checkFirst;
+         "checkSecond" >:: checkSecond;
+         "checkTypeApp" >:: checkTypeApp;
+         "checkFunType" >:: checkFunType;
+         "checkLam" >:: checkLam;
+         "checkAnnot" >:: checkAnnot;
+         "checkList" >:: checkList;
+         "checkHead" >:: checkHead;
+         "checkTail" >:: checkTail;
+         "genError" >:: genError;
        ]
 
 let () = run_test_tt_main suite

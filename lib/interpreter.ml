@@ -27,7 +27,7 @@ let getTypeAndReducedFromLexBuf (lexbuf : Lexing.lexbuf) (system : Infer.system)
   (* convert to debruijn *)
   let dBAst = List.map DBAst.toDeBruijn astList in
   (* infer type *)
-  let infer = List.map (getSecond $ Infer.inferType system) dBAst in
+  let infer = List.map (snd $ Infer.inferType system) dBAst in
   (* reduce expressions *)
   let reduced = List.map Simple.evaluate dBAst in
   (* combine result *)

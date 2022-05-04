@@ -128,6 +128,33 @@ let listToString _ =
   (* ASSERT *)
   assert_equal expected output
 
+let headToString _ =
+  (* ARRANGE *)
+  let input = Head (List [ Int 1; Unit ]) in
+  let expected = "Head(List(Int(1)\nUnit\n))" in
+  (* ACT *)
+  let output = exprToString input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let tailToString _ =
+  (* ARRANGE *)
+  let input = Tail (List [ Int 1; Unit ]) in
+  let expected = "Tail(List(Int(1)\nUnit\n))" in
+  (* ACT *)
+  let output = exprToString input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let exprListToString _ =
+  (* ARRANGE *)
+  let input = [ Int 1; Unit; Var "p" ] in
+  let expected = "Int(1)\nUnit\nVar(p)\n" in
+  (* ACT *)
+  let output = exprListToString input in
+  (* ASSERT *)
+  assert_equal expected output
+
 let suiteToString =
   "ASTToStringTests"
   >::: [
@@ -145,6 +172,9 @@ let suiteToString =
          "lamToString" >:: lamToString;
          "annotToString" >:: annotToString;
          "listToString" >:: listToString;
+         "headToString" >:: headToString;
+         "tailToString" >:: tailToString;
+         "exprListToString" >:: exprListToString;
        ]
 
 let () = run_test_tt_main suiteToString

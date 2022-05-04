@@ -204,7 +204,9 @@ let lambdaTypeWithForAll _ =
             ForAll ("a", ForAll ("b", ForAll ("c", Fun (Var "a", Var "b")))),
             Var "x" ) )
   in
-  let expected = Lam (FunType (Poly (3, RhoMono (Fun (Var 2, Var 1))), Var 0)) in
+  let expected =
+    Lam (FunType (Poly (3, RhoMono (Fun (Var 2, Var 1))), Var 0))
+  in
   (* ACT *)
   let output = toDeBruijn input in
   (* ASSERT *)
@@ -242,6 +244,51 @@ let nestedLambda _ =
   (* ASSERT *)
   assert_equal expected output
 
+let toDeBruijnAnnot _ =
+  (* ARRANGE *)
+  let input : Ast.expr = Annot (Int 1, Int) in
+  let expected = Annot (Int 1, Mono Int) in
+  (* ACT *)
+  let output = toDeBruijn input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let toDeBruijnList _ =
+  (* ARRANGE *)
+  let input : Ast.expr = List [ Int 1; Bool true ] in
+  let expected = List [ Int 1; Bool true ] in
+  (* ACT *)
+  let output = toDeBruijn input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let toDeBruijnHead _ =
+  (* ARRANGE *)
+  let input : Ast.expr = Head (List [ Int 1; Bool true ]) in
+  let expected = Head (List [ Int 1; Bool true ]) in
+  (* ACT *)
+  let output = toDeBruijn input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let toDeBruijnTail _ =
+  (* ARRANGE *)
+  let input : Ast.expr = Tail (List [ Int 1; Bool true ]) in
+  let expected = Tail (List [ Int 1; Bool true ]) in
+  (* ACT *)
+  let output = toDeBruijn input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let toDeBruijnVarXExpectEmptyEnvError _ =
+  (* ARRANGE *)
+  let input : Ast.expr = Var "x" in
+  let expected = DBAstException "Empty var env - unbound value x" in
+  (* ACT *)
+  let output _ = toDeBruijn input in
+  (* ASSERT *)
+  assert_raises expected output
+
 let suite =
   "DeBruijnTransformTest"
   >::: [
@@ -268,6 +315,188 @@ let suite =
          "nestedLambdaTypeAbstraction" >:: nestedLambdaTypeAbstraction;
          "lambdaTypeWithForAll" >:: lambdaTypeWithForAll;
          "nestedLambda" >:: nestedLambda;
+         "toDeBruijnAnnot" >:: toDeBruijnAnnot;
+         "toDeBruijnList" >:: toDeBruijnList;
+         "toDeBruijnHead" >:: toDeBruijnHead;
+         "toDeBruijnTail" >:: toDeBruijnTail;
+         "toDeBruijnVarXExpectEmptyEnvError"
+         >:: toDeBruijnVarXExpectEmptyEnvError;
+       ]
+
+let intToString _ =
+  (* ARRANGE *)
+  let input = Int 1 in
+  let expected = "1" in
+  (* ACT *)
+  let output = exprToString input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let varToString _ =
+  (* ARRANGE *)
+  let input = Var 0 in
+  let expected = "p" in
+  (* ACT *)
+  let output = exprToString input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let boolToString _ =
+  (* ARRANGE *)
+  let input = Bool true in
+  let expected = "true" in
+  (* ACT *)
+  let output = exprToString input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let unitToString _ =
+  (* ARRANGE *)
+  let input = Unit in
+  let expected = "()" in
+  (* ACT *)
+  let output = exprToString input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let pairToString _ =
+  (* ARRANGE *)
+  let input = Pair (Int 2, Bool false) in
+  let expected = "(2,false)" in
+  (* ACT *)
+  let output = exprToString input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let firstToString _ =
+  (* ARRANGE *)
+  let input = Fst (Int 1) in
+  let expected = "fst 1" in
+  (* ACT *)
+  let output = exprToString input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let secondToString _ =
+  (* ARRANGE *)
+  let input = Snd Unit in
+  let expected = "snd ()" in
+  (* ACT *)
+  let output = exprToString input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let funToString _ =
+  (* ARRANGE *)
+  let input = Fun (Var 0) in
+  let expected = "fn q => q" in
+  (* ACT *)
+  let output = exprToString input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let funTypeToString _ =
+  (* ARRANGE *)
+  let input = FunType (Mono Int, Var 1) in
+  let expected = "fn q : int => p" in
+  (* ACT *)
+  let output = exprToString input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let appToString _ =
+  (* ARRANGE *)
+  let input = App (Var 0, Var 1) in
+  let expected = "(p) (o)" in
+  (* ACT *)
+  let output = exprToString input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let typeAppToString _ =
+  (* ARRANGE *)
+  let input = TypeApp (Var 0, Mono Bool) in
+  let expected = "(p) {bool}" in
+  (* ACT *)
+  let output = exprToString input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let lamToString _ =
+  (* ARRANGE *)
+  let input = Lam (Pair (Unit, Unit)) in
+  let expected = "lam a.((),())" in
+  (* ACT *)
+  let output = exprToString input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let annotToString _ =
+  (* ARRANGE *)
+  let input = Annot (Pair (Unit, Unit), Mono (Pair (Int, Int))) in
+  let expected = "(((),())) : ((int, int))" in
+  (* ACT *)
+  let output = exprToString input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let listToString _ =
+  (* ARRANGE *)
+  let input = List [ Int 1; Unit; Var 0 ] in
+  let expected = "[ 1 () p]" in
+  (* ACT *)
+  let output = exprToString input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let headToString _ =
+  (* ARRANGE *)
+  let input = Head (List [ Int 1; Unit ]) in
+  let expected = "hd [ 1 ()]" in
+  (* ACT *)
+  let output = exprToString input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let tailToString _ =
+  (* ARRANGE *)
+  let input = Tail (List [ Int 1; Unit ]) in
+  let expected = "tl [ 1 ()]" in
+  (* ACT *)
+  let output = exprToString input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let exprListToString _ =
+  (* ARRANGE *)
+  let input = [ Int 1; Unit; Var 0 ] in
+  let expected = "1\n()\np\n" in
+  (* ACT *)
+  let output = exprListToString input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let suiteToString =
+  "DBASTToStringTests"
+  >::: [
+         "intToString" >:: intToString;
+         "varToString" >:: varToString;
+         "boolToString" >:: boolToString;
+         "unitToString" >:: unitToString;
+         "pairToString" >:: pairToString;
+         "firstToString" >:: firstToString;
+         "secondToString" >:: secondToString;
+         "funToString" >:: funToString;
+         "funTypeToString" >:: funTypeToString;
+         "appToString" >:: appToString;
+         "typeAppToString" >:: typeAppToString;
+         "lamToString" >:: lamToString;
+         "annotToString" >:: annotToString;
+         "listToString" >:: listToString;
+         "headToString" >:: headToString;
+         "tailToString" >:: tailToString;
+         "exprListToString" >:: exprListToString;
        ]
 
 let () = run_test_tt_main suite
+let () = run_test_tt_main suiteToString

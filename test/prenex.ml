@@ -154,6 +154,15 @@ let monoException _ =
   (* ASSERT *)
   assert_equal output expected
 
+let polyList _ =
+  (* ARRANGE *)
+  let input = Rho (RhoList (1, RhoMono Int)) in
+  let expected = (0,RhoList (1, RhoMono Int)) in
+  (* ACT *)
+  let output = pr input in
+  (* ASSERT *)
+  assert_equal output expected
+
 let suite =
   "PrenexTest"
   >::: [
@@ -171,6 +180,7 @@ let suite =
          "rhoPair2" >:: rhoPair2;
          "rhoPair3" >:: rhoPair3;
          "monoException" >:: monoException;
+         "polyList" >:: polyList;
        ]
 
 let () = run_test_tt_main suite

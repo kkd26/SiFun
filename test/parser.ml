@@ -241,6 +241,24 @@ let nestedLambda _ =
   (* ASSERT *)
   assert_equal expected output
 
+let head _ =
+  (* ARRANGE *)
+  let input = "hd [1]" in
+  let expected = [ Head (List [ Int 1 ]) ] in
+  (* ACT *)
+  let output = stringToExprList input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let tail _ =
+  (* ARRANGE *)
+  let input = "tl [2]" in
+  let expected = [ Tail (List [ Int 2 ]) ] in
+  (* ACT *)
+  let output = stringToExprList input in
+  (* ASSERT *)
+  assert_equal expected output
+
 let list _ =
   (* ARRANGE *)
   let input = "[1;2;3]" in
@@ -288,6 +306,73 @@ let blockEmpty _ =
   (* ASSERT *)
   assert_equal expected output
 
+let blockEmptyEndOfFile _ =
+  (* ARRANGE *)
+  let input = ";;" in
+  let expected = [] in
+  (* ACT *)
+  let output = stringToExprList input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let parserError _ =
+  (* ARRANGE *)
+  let input = "fn" in
+  let expected =
+    LexBufException "File \"\", line 1, character 2:\nSyntax error"
+  in
+  (* ACT *)
+  let output _ = stringToExprList input in
+  (* ASSERT *)
+  assert_raises expected output
+
+let pairPair123 _ =
+  (* ARRANGE *)
+  let input = "(1,(2,3))" in
+  let expected = [ Pair (Int 1, Pair (Int 2, Int 3)) ] in
+  (* ACT *)
+  let output = stringToExprList input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let pairPair123Error _ =
+  (* ARRANGE *)
+  let input = "(,(2,3))" in
+  let expected =
+    LexBufException "File \"\", line 1, character 2:\nSyntax error"
+  in
+  (* ACT *)
+  let output _ = stringToExprList input in
+  (* ASSERT *)
+  assert_raises expected output
+
+let lParUnitUnit _ =
+  (* ARRANGE *)
+  let input = "((),())" in
+  let expected = [ Pair (Unit, Unit) ] in
+  (* ACT *)
+  let output = stringToExprList input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let typFunFalse _ =
+  (* ARRANGE *)
+  let input = "fn x  => false" in
+  let expected = [ Fun ("x", Bool false) ] in
+  (* ACT *)
+  let output = stringToExprList input in
+  (* ASSERT *)
+  assert_equal expected output
+
+let typFunFst _ =
+  (* ARRANGE *)
+  let input = "fn x  => fst x" in
+  let expected = [ Fun ("x", Fst (Var "x")) ] in
+  (* ACT *)
+  let output = stringToExprList input in
+  (* ASSERT *)
+  assert_equal expected output
+
 let suite =
   "LexerAndParserTests"
   >::: [
@@ -316,10 +401,19 @@ let suite =
          "lambdaTypeWithForAll" >:: lambdaTypeWithForAll;
          "nestedLambda" >:: nestedLambda;
          "list" >:: list;
+         "head" >:: head;
+         "tail" >:: tail;
          "newline" >:: newline;
          "syntaxErrorUnexpectedCharacter" >:: syntaxErrorUnexpectedCharacter;
          "blockSemicolonFront" >:: blockSemicolonFront;
          "blockEmpty" >:: blockEmpty;
+         "blockEmptyEndOfFile" >:: blockEmptyEndOfFile;
+         "parserError" >:: parserError;
+         "pairPair123" >:: pairPair123;
+         "pairPair123Error" >:: pairPair123Error;
+         "lParUnitUnit" >:: lParUnitUnit;
+         "typFunFalse" >:: typFunFalse;
+         "typFunFst" >:: typFunFst;
        ]
 
 let () = run_test_tt_main suite

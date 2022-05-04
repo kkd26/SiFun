@@ -111,6 +111,10 @@ get_test_dir (){
     fi
 }
 
+run_unit_tests (){
+    $($(dirname $0)/test_coverage.sh)
+}
+
 main (){
     get_test_dir $1
     echo -e "Running tests in $test_dir\n"

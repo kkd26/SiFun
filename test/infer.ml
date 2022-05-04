@@ -285,6 +285,96 @@ let appPairApp1TrueIdentity _ =
   (* ASSERT *)
   assert_equal expected output
 
+let annotInt _ =
+  (* ARRANGE *)
+  let input : DBAst.expr = Annot (Int 1, Mono Int) in
+  let expected = Mono Int in
+  (* ACT *)
+  let output = snd (inferTypeHMV input) in
+  (* ASSERT *)
+  assert_equal expected output
+
+let listEmpty _ =
+  (* ARRANGE *)
+  let input : DBAst.expr = List [] in
+  let expected = Mono (List (FreshVar 0)) in
+  (* ACT *)
+  let output = snd (inferTypeHMV input) in
+  (* ASSERT *)
+  assert_equal expected output
+
+let listInt _ =
+  (* ARRANGE *)
+  let input : DBAst.expr = List [ Int 1; Int 2 ] in
+  let expected = Mono (List Int) in
+  (* ACT *)
+  let output = snd (inferTypeHMV input) in
+  (* ASSERT *)
+  assert_equal expected output
+
+let headInt _ =
+  (* ARRANGE *)
+  let input : DBAst.expr = Head (List [ Int 1; Int 2 ]) in
+  let expected = Mono Int in
+  (* ACT *)
+  let output = snd (inferTypeHMV input) in
+  (* ASSERT *)
+  assert_equal expected output
+
+let tailInt _ =
+  (* ARRANGE *)
+  let input : DBAst.expr = Tail (List [ Int 1; Int 2 ]) in
+  let expected = Mono (List Int) in
+  (* ACT *)
+  let output = snd (inferTypeHMV input) in
+  (* ASSERT *)
+  assert_equal expected output
+
+let inferHmNoSupportedTypeApp _ =
+  (* ARRANGE *)
+  let input : DBAst.expr = TypeApp (Int 1, Mono Int) in
+  let expected = InferException "Not supported in HM type system" in
+  (* ACT *)
+  let output _ = snd (inferType HM input) in
+  (* ASSERT *)
+  assert_raises expected output
+
+let inferHmNoSupportedFunType _ =
+  (* ARRANGE *)
+  let input : DBAst.expr = FunType (Mono Int, Var 0) in
+  let expected = InferException "Not supported in HM type system" in
+  (* ACT *)
+  let output _ = snd (inferType HM input) in
+  (* ASSERT *)
+  assert_raises expected output
+
+let inferHmNoSupportedLam _ =
+  (* ARRANGE *)
+  let input : DBAst.expr = Lam (Int 1) in
+  let expected = InferException "Not supported in HM type system" in
+  (* ACT *)
+  let output _ = snd (inferType HM input) in
+  (* ASSERT *)
+  assert_raises expected output
+
+let inferHmvInt _ =
+  (* ARRANGE *)
+  let input : DBAst.expr = Lam (Int 1) in
+  let expected = Poly (1, RhoMono Int) in
+  (* ACT *)
+  let output = snd (inferType HMV input) in
+  (* ASSERT *)
+  assert_equal expected output
+
+let inferBdInt _ =
+  (* ARRANGE *)
+  let input : DBAst.expr = Lam (Int 1) in
+  let expected = Poly (1, RhoMono Int) in
+  (* ACT *)
+  let output = snd (inferType BD input) in
+  (* ASSERT *)
+  assert_equal expected output
+
 let suite =
   "TypeInferenceTest"
   >::: [
@@ -313,6 +403,16 @@ let suite =
          "nestedLambda" >:: nestedLambda;
          "funPairTypedApp1True" >:: funPairTypedApp1True;
          "appPairApp1TrueIdentity" >:: appPairApp1TrueIdentity;
+         "annotInt" >:: annotInt;
+         "listEmpty" >:: listEmpty;
+         "listInt" >:: listInt;
+         "headInt" >:: headInt;
+         "tailInt" >:: tailInt;
+         "inferHmNoSupportedTypeApp" >:: inferHmNoSupportedTypeApp;
+         "inferHmNoSupportedFunType" >:: inferHmNoSupportedFunType;
+         "inferHmNoSupportedLam" >:: inferHmNoSupportedLam;
+         "inferHmvInt" >:: inferHmvInt;
+         "inferBdInt" >:: inferBdInt;
        ]
 
 let () = run_test_tt_main suite

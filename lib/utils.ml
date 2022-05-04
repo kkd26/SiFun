@@ -1,5 +1,3 @@
-let getFirst (a, _) = a
-let getSecond (_, b) = b
 let ( $ ) f g x = f (g x)
 
 let getPositionString (position : Lexing.position) =

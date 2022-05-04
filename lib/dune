@@ -6,4 +6,6 @@
 
 (library
  (name sifun)
- (instrumentation (backend bisect_ppx)))
+ (instrumentation 
+  (backend bisect_ppx --exclusions lib/bisect.exclude)
+  (deps bisect.exclude)))

@@ -21,7 +21,9 @@ let rec pr (tk : typeGenre) : polyType =
             let p1 = shiftPoly a2 0 p1 in
             let p2 = (0, r2) in
             Poly (a2, RhoPair (p1, p2))
-        | _ -> failwith "not possible")
+        | RhoList l -> Rho (RhoList (pr (Poly l)))
+        (* The last case won't be reached, as Rho(RhoMono m) gets normalized into Mono m *)
+        | RhoMono _ -> failwith "not possible")
     | Mono _ -> tk
   in
 
