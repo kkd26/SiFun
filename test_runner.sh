@@ -7,6 +7,10 @@ NC='\033[0m' # No Color
 
 dune build
 
+to_log (){
+    echo "$1" >> $logname
+}
+
 echo_green (){
     printf "${GREEN}$1${NC}\n"
 }
@@ -69,9 +73,9 @@ compare_output (){
     runtime=$(run_test $1)
 
     if [ -s $haskell_file ]; then
-        runtime_hs=$(run_test_hs $haskell_file)
+        runtime_haskell=$(run_test_hs $haskell_file)
     else
-        runtime_hs=""
+        runtime_haskell=""
     fi
 
     output=$(cat "$tempfile")
@@ -82,11 +86,12 @@ compare_output (){
     if ! [ -s $1 ]; then
         echo_yellow "EMPTY"
     elif [[ $expected == ":time" ]]; then
-        echo_yellow "TIME_ONLY\t$runtime\t$runtime_hs"
+        echo_yellow "TIME_ONLY\t$runtime\t$runtime_haskell"
+        to_log "$runtime,$runtime_haskell"
     elif [[ $output == $expected ]]; then
-        echo_green "OK\t\t$runtime\t$runtime_hs"
+        echo_green "OK\t\t$runtime\t$runtime_haskell"
     else
-        echo_red "ERROR\t\t$runtime\t$runtime_hs"
+        echo_red "ERROR\t\t$runtime\t$runtime_haskell"
         diff --color $expected_file $tempfile
     fi
 
@@ -118,10 +123,25 @@ run_unit_tests (){
 main (){
     get_test_dir $1
     echo -e "Running tests in $test_dir\n"
-    echo -e "Name\t\tResult\t\tTime\t\tHaskell Time"
+    echo -e "Name\t\tResult\t\tSiFun Time\tHaskell Time"
     echo_line
     compare_all $test_dir
     echo_line
 }
 
-main $1
+while getopts "n:t:" options; do
+    case "${options}" in
+        n)                                    
+            NUM=${OPTARG}                      
+        ;;
+        t)                                    
+            TESTDIR=${OPTARG}                      
+        ;;
+    esac
+done
+
+for i in $(seq $NUM); do
+    echo -e "Running $i batch..."
+    logname="log-$(date +"%F-%H-%M-%S").log"
+    main $TESTDIR
+done

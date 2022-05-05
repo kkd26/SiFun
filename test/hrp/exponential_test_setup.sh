@@ -39,19 +39,20 @@ make_n_hs (){
 }
 
 init_programs (){
-    if [[ $HASKELL = "" ]]; then
-        make_fun=make_n_sf
-        ext="sf.in"
-    else
+    if [[ -n $HASKELL ]]; then
         pref=$haskell_pref
         suf=$haskell_suf
         make_fun=make_n_hs
         ext="hs.in"
+    else
+        make_fun=make_n_sf
+        ext="sf.in"
     fi
     
-    for i in {0..9}; do
-        target="$dir/T02$i.$ext"
-        program=$($make_fun $i)
+    for i in {20..29}; do
+        target="$dir/T0$i.$ext"
+        num=$((i-20))
+        program=$($make_fun $num)
         echo -n "$pref" > $target
         echo "$program" >> $target
         echo -n "$suf" >> $target
